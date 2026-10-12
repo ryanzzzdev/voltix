@@ -1,13 +1,14 @@
-GO ?= go
+GO ?= $(shell command -v go || echo $(HOME)/.local/go/bin/go)
 UV ?= uv
 SHELL := /bin/bash
 
-.PHONY: all build test check sim-env sim-test integration demo demo-down clean
+.PHONY: all build test check sim-env sim-test integration demo demo-down native-test clean
 
 all: build
 
 build:
 	$(GO) build -o bin/voltix ./cmd/voltix
+	$(GO) build -o bin/upstream-mock ./cmd/upstream-mock
 
 test:
 	$(GO) test ./...
@@ -43,6 +44,11 @@ demo:
 
 demo-down:
 	docker compose -f deploy/compose.yaml down -v
+
+# Native systemd --user service test (VTX-017). No root; install/remove
+# are confined to ~/.config/systemd/user and ~/.local/state/voltix.
+native-test:
+	./scripts/native-test.sh
 
 clean:
 	rm -rf bin

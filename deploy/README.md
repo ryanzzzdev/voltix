@@ -49,6 +49,32 @@ Mock test-only routes (documented as non-production): `POST
 are RFC 3339 timestamps; the controller converts validity to monotonic
 time at acceptance.
 
+## Native systemd user service
+
+`make native-test` runs the full machine-checkable verification:
+installs `deploy/systemd/voltix.service` as a `systemd --user` unit
+(no root, no host service), starts the sim on ports 2512-2514 and the
+mock on 8191, then checks process uid, state-dir mode, journal
+visibility, `MemoryMax=128M` cgroup enforcement, SIGKILL restart with
+new boot session, and old-session command rejection.
+
+Manual steps:
+
+```
+make build                        # produces bin/voltix, bin/upstream-mock
+deploy/systemd/install.sh         # unit + config + env under ~/.config
+systemctl --user start voltix     # dispatch on 127.0.0.1:8190
+journalctl --user -u voltix -f    # logs
+deploy/systemd/remove.sh          # removes all test-created resources
+```
+
+Quirk noted during verification: the user manager implements
+`StateDirectory=voltix` as `~/.local/state/voltix` -> symlink ->
+`~/.config/voltix`; `stat` without `-L` reports the symlink's 777. The
+real dir is chmodded 0700 by `ExecStartPre` and owned by the user.
+Requires `systemctl --user` (a user manager); MemoryMax needs cgroup
+v2 with memory delegated to `user@UID.service` (verified on this host).
+
 ## Notes
 
 - The Compose demo is not the systemd deployment; native service

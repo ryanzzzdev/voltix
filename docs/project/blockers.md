@@ -35,10 +35,10 @@ No obstacle blocks beginning bootstrap or protocol investigation. These are expl
 ## BLK-003 — Native systemd and network-fault execution environment
 
 - Identified: 2026-10-12
-- Status: Open
+- Status: Resolved
 - Affected tasks: [VTX-017](backlog.md#vtx-017), [VTX-018](backlog.md#vtx-018); M4 native/fault evidence.
 - Impact: Native systemd tests need an appropriate disposable Linux environment; network fault tests need scoped capabilities. Container lifecycle tests alone do not satisfy native acceptance.
 - Blocking scope: Future native/privileged execution gate, not local application development. Do not mark the project blocked.
 - Evidence: Current workspace permits documentation writes; systemd/VM/container privileges have not been inspected or exercised for this project.
 - Next action / owner: Implementing agent inspects available local facilities at packaging time and chooses a disposable VM/test environment. Request missing environment input only if necessary; record unavailable checks accurately.
-- Resolution: Pending environment verification. No service installation or network changes performed during planning.
+- Resolution: Resolved 2026-10-12 — `systemctl --user` provides a real user manager (systemd 259) with cgroup v2 memory delegation: VTX-017 verified a user unit end to end (restart, journal, MemoryMax=128MiB cgroup-enforced, state-dir ownership) with zero root/host changes. Unprivileged user namespaces are DENIED (uid_map write fails), so VTX-018's network faults are application/process-level (sim delay/offline/corrupt, receiver pause/drop, SIGSTOP/SIGKILL, ulimit -f) rather than netns/tc/iptables — recorded as an explicit boundary, not skipped.

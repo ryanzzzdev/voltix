@@ -22,8 +22,8 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
-- 🟢 [VTX-017 — Package and verify the native Linux service](#vtx-017)
-- 📋 [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
+- ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
+- 🟢 [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - 📋 [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
 - 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
@@ -541,7 +541,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: deployment
 - Milestone: M4
 - Priority: Normal
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-015](#vtx-015)
 - References: [architecture](architecture.md), [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
@@ -558,7 +558,7 @@ Verify the controller as an unprivileged systemd service in an explicitly select
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`deploy/systemd/voltix.service` is a real `systemd --user` unit (BLK-003 resolved this way — the host runs a user manager on cgroup v2; no root or host service needed): Restart=on-failure/RestartSec=2, MemoryMax=128M, NoNewPrivileges+PrivateTmp+ProtectSystem=strict, journal output, StateDirectory=voltix. install.sh/remove.sh are idempotent and confined to ~/.config/{systemd/user,voltix}, ~/.local/libexec and ~/.local/state. `make native-test` (scripts/native-test.sh) starts sim on 2512-2514 + upstream-mock on 8191 as plain processes, then verifies everything machine-checkably. Verified 2026-10-12 ~04:00 UTC — 11/11 checks: status live, uid=1000, state dir 0700 owner=user, journal lines, MemoryMax=134217728 enforced in cgroup memory.max, dispatch rev1 -> ACTIVE, SIGKILL -> new boot session in 2.68 s, old-session replay -> 409, telemetry reached+acked at mock. Quirks recorded in deploy/README: user-manager StateDirectory is a ~/.local/state->~/.config symlink (stat -L needed; ExecStartPre chmods the real dir 0700); command lifetime bound is 30 s. Actual OOM-under-load not exercised — MemoryMax cgroup enforcement verified only. This is distinct native evidence, not container restart evidence.
 
 ### Notes
 
@@ -572,7 +572,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Ready 🟢
 - Depends on: [VTX-015](#vtx-015), [VTX-016](#vtx-016), [VTX-017](#vtx-017)
 - References: [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
