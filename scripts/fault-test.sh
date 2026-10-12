@@ -94,6 +94,12 @@ if [ -n "$T_ZERO" ]; then
   # 100 kW at 50 kW/s slew = 2 s; allowance = slew + cycle slack
   [ "$ZERO" -le 8 ] && ok "output reached 0 at expiry+${ZERO}s" \
     || bad "zero took expiry+${ZERO}s"
+  # Audit R6: zero inside the slew window while the sim watchdog is NOT
+  # expired proves the fallback was a controller write — output could not
+  # have reached 0 via watchdog ramp inside 8s (trip is 10s).
+  WE=$(simstate | python3 -c "import json,sys;print(json.load(sys.stdin)['state']['watchdog_expired'])" 2>/dev/null)
+  [ "$WE" = "False" ] && ok "fallback was a controller write (watchdog not expired)" \
+    || bad "zero may have come from watchdog trip, not a fallback write (we=$WE)"
 else bad "output never reached 0"; fi
 
 # --- C3: field-link outage ----------------------------------------------
@@ -184,24 +190,40 @@ done
 
 # --- D: lost acknowledgement ---------------------------------------------
 say "D: commit-then-drop -> retry with same identities, receiver dedups"
+# Audit R6: all assertions are relative to THIS scenario's baselines —
+# upload_failed is cumulative and already nonzero from scenario A.
+UF0=$(field "['telemetry']['upload_failed']")
 C0=$(curl -sf "$MOCK/control/count" | jget "['count']")
+UF0=${UF0:-0}; C0=${C0:-0}
 mockctl drop-after-commit >/dev/null
-# poll until receiver count and uploaded agree (dedup means they can
-# only agree once the dropped batch has replayed and been pruned)
-C1=""; UP=""; UF=""
+# Wait for the scenario itself: receiver committed new rows (C>C0) AND a
+# new upload failure was recorded (UF>UF0) — together that is
+# commit-then-drop actually exercised, not a stale counter.
+C1=""; UF=""
 for i in $(seq 1 30); do
   C1=$(curl -sf "$MOCK/control/count" | jget "['count']")
-  UP=$(field "['telemetry']['uploaded']")
   UF=$(field "['telemetry']['upload_failed']")
-  [ -n "$UP" ] && [ -n "$C1" ] && [ "$UP" -ge "$C1" ] && [ "$C1" -gt "${C0:-0}" ] && break
+  [ "${C1:-0}" -gt "$C0" ] && [ "${UF:-0}" -gt "$UF0" ] && break
+  sleep 1
+done
+{ [ "${C1:-0}" -gt "$C0" ] && [ "${UF:-0}" -gt "$UF0" ]; } \
+  && ok "commit-then-drop exercised (rows $C0->$C1, failures $UF0->$UF)" \
+  || bad "drop not exercised: rows $C0->$C1 failures $UF0->$UF"
+# Now wait for the replay to drain: dedup means receiver count equals
+# sender-acked total exactly — a duplicate would leave C > uploaded, a
+# conflicted retry would leave upload_failed still climbing.
+CF=""; UP=""; UF2=""
+for i in $(seq 1 40); do
+  CF=$(curl -sf "$MOCK/control/count" | jget "['count']")
+  UP=$(field "['telemetry']['uploaded']")
+  UF2=$(field "['telemetry']['upload_failed']")
+  [ -n "$UP" ] && [ "${CF:-0}" = "$UP" ] && [ "${CF:-0}" -gt "$C0" ] && break
   sleep 2
 done
-[ "${UF:-0}" -gt 0 ] && ok "lost response recorded (upload_failed=$UF)" \
-  || bad "no upload failure recorded"
-if [ "${UP:-0}" -ge "${C1:-0}" ] && [ "${C1:-0}" -gt "${C0:-0}" ]; then
-  ok "receiver rows $C0->$C1 with no duplicates (uploaded=$UP)"
+if [ -n "$UP" ] && [ "${CF:-0}" = "$UP" ] && [ "${CF:-0}" -gt "$C0" ]; then
+  ok "replay deduped: receiver rows=$CF == uploaded=$UP (failures +$((UF2-UF0)))"
 else
-  bad "count $C0->$C1 uploaded=$UP"
+  bad "dedup not proven: rows=$CF uploaded=$UP failures $UF0->$UF2"
 fi
 
 say "results: $PASS passed, $FAIL failed"
