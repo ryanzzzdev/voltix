@@ -8,7 +8,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 
 - ✅ [VTX-001 — Establish project-management standards](#vtx-001)
 - ✅ [VTX-002 — Establish the implementation plan and initial backlog](#vtx-002)
-- 🟢 [VTX-003 — Bootstrap the minimal development workspace](#vtx-003)
+- ✅ [VTX-003 — Bootstrap the minimal development workspace](#vtx-003)
 - 🟢 [VTX-004 — Verify and freeze the simulator wire profile](#vtx-004)
 - 📋 [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - 📋 [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
@@ -107,7 +107,7 @@ The user requested detailed planning on 2026-10-12. Bootstrap follows planning a
 - Area: integration
 - Milestone: M1
 - Priority: High
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-002](#vtx-002)
 - References: [architecture](architecture.md)
 
@@ -124,11 +124,11 @@ Establish reproducible Go and Python development commands without scaffolding fu
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+Directory/Git state inspected; existing documents preserved and no remote invented. Go 1.27.2 installed from the official linux-amd64 tarball to `~/.local/go` with sha256 checked against the published digest (`ecbadb99…45fe5`); no sudo required. Module path `voltix` chosen by the user; `go.mod`, `cmd/voltix/main.go`, `Makefile`, `.gitignore`, `configs/example.yaml` (no secrets) and `sim/pyproject.toml` created. Simulator dependencies pinned: pymodbus 3.15.0 and pytest 9.1.1 under uv-managed CPython 3.13.14 with `sim/uv.lock` committed; pymodbus 3.16.x deliberately skipped because it was published 2026-10-11, under seven days old. Verified on 2026-10-12: `go mod tidy`, `make build`, `make test` (no test files yet — reported honestly), `make check` (gofmt + vet), and `./bin/voltix --config configs/example.yaml` smoke run all pass. Clean-setup instructions added to README.
 
 ### Notes
 
-First execution task after planning; build only the minimum needed for the device slice. The Git repository was initialised and the documentation baseline committed on 2026-10-12 at user request, ahead of this task; the remaining bootstrap scope (toolchain pins, module, ignore rules, Makefile) is unchanged.
+Done in one checkpoint of the M1 campaign. `make test` has no Go tests yet; first test code arrives with VTX-005/006.
 
 <a id="vtx-004"></a>
 

@@ -16,6 +16,25 @@ Voltix is a planned Linux edge controller and telemetry gateway for simulated ba
 
 ## Development setup
 
-Application scaffolding, dependencies, build commands, and runtime setup have not been established. Reproducible setup instructions will be added when verified during implementation.
+Prerequisites verified on Linux x86_64 (2026-10-12):
+
+- **Go 1.27.2** — install the official tarball to `~/.local/go` and add `~/.local/go/bin` to `PATH`:
+  ```bash
+  curl -sLO https://go.dev/dl/go1.27.2.linux-amd64.tar.gz
+  tar -C ~/.local -xzf go1.27.2.linux-amd64.tar.gz
+  ```
+- **uv** — manages the simulator's Python environment (CPython 3.13) under `sim/`.
+
+Commands:
+
+```bash
+make build     # build bin/voltix
+make test      # Go unit tests
+make check     # gofmt + go vet
+make sim-env   # create/update the pinned simulator environment
+./bin/voltix --config configs/example.yaml
+```
+
+Simulator dependencies are pinned in `sim/pyproject.toml` and `sim/uv.lock` (pymodbus 3.15.0, pytest 9.1.1). Application code beyond the minimal entry point has not been implemented yet.
 
 Read [AGENTS.md](AGENTS.md) and the documentation workflow before meaningful project work.

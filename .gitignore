@@ -1,0 +1,6 @@
+/bin/
+/.campaign/
+sim/.venv/
+__pycache__/
+*.py[cod]
+.state/

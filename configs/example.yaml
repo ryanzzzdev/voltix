@@ -1,0 +1,47 @@
+# Example Voltix controller configuration for the simulated demo site.
+# Values are simulation defaults, not real-site recommendations.
+# Secrets are never stored here: provide the dispatch/telemetry bearer tokens
+# through the environment (e.g. VOLTIX_DISPATCH_TOKEN, VOLTIX_TELEMETRY_TOKEN).
+
+controller_id: voltix-demo
+
+devices:
+  inverter:
+    host: 127.0.0.1
+    port: 1502
+    unit_id: 1
+    sunspec_base_address: 40000
+  meter:
+    host: 127.0.0.1
+    port: 1503
+    unit_id: 1
+    sunspec_base_address: 40000
+
+limits:
+  soc_min_pct: 5
+  soc_max_pct: 95
+  site_export_max_kw: 400
+  charge_max_kw: 500
+  discharge_max_kw: 500
+  normal_slew_kw_per_s: 50
+
+timing:
+  cycle_period_ms: 1000
+  read_deadline_ms: 200
+  write_deadline_ms: 100
+  cycle_budget_ms: 350
+  max_input_age_s: 2
+  max_loop_gap_s: 2.5
+
+telemetry:
+  state_dir: .state/voltix
+  max_status_events: 90000
+  max_alarm_events: 10000
+  max_payload_bytes: 1024
+  handoff_status_slots: 900
+  handoff_alarm_slots: 100
+
+upstream:
+  dispatch_listen: 127.0.0.1:8080
+  telemetry_url: http://127.0.0.1:8081/api/telemetry
+  http_deadline_ms: 3000

@@ -1,0 +1,16 @@
+[project]
+name = "voltix-sim"
+version = "0.0.0"
+description = "Voltix simulated battery inverter and site meter (test fixture)"
+requires-python = ">=3.11"
+dependencies = [
+    "pymodbus==3.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+]
+
+[tool.uv]
+package = false
