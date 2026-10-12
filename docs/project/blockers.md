@@ -22,13 +22,13 @@ No obstacle blocks beginning bootstrap or protocol investigation. These are expl
 ## BLK-002 — Driver compatibility and persistence build requirements
 
 - Identified: 2026-10-12
-- Status: Open
+- Status: Resolved
 - Affected tasks: [VTX-006](backlog.md#vtx-006), [VTX-012](backlog.md#vtx-012).
 - Impact: Go Modbus cancellation/socket behaviour and SQLite driver build/pragma support must be verified rather than inferred from API names.
 - Blocking scope: Gates those adapters' acceptance; bootstrap and pure policy/specification work can proceed. No library failure is known.
 - Evidence: Modbus sub-gate verified 2026-10-12: `simonvetter/modbus` v1.6.4 sets a real socket `SetDeadline` per request (`tcp_transport.go`), serialises requests with an internal mutex, and maps i/o timeouts to `ErrRequestTimedOut`; bounded-timeout/malformed/hangup-reconnect tests pass in `internal/device`. SQLite driver/pragma sub-gate remains unverified (VTX-012).
-- Next action / owner: VTX-012 selects the SQLite driver and records WAL/FULL pragma verification. Record stays open until that sub-gate passes.
-- Resolution: Partial — Modbus sub-gate resolved via VTX-006; SQLite sub-gate pending.
+- Next action / owner: None — both sub-gates verified. Modbus via VTX-006 (simonvetter/modbus socket deadlines); SQLite via VTX-012.
+- Resolution: Resolved 2026-10-12 — SQLite driver selected as modernc.org/sqlite v1.53.0 (BSD-3, published 2026-06-21): pure Go, so no CGO toolchain is required to build; `PRAGMA journal_mode`=`wal` and `PRAGMA synchronous`=2 (FULL) verified on actual connections by `internal/store` tests; incompatible user_version and corrupt files fail Open without silent reset.
 
 <a id="blk-003"></a>
 

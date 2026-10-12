@@ -17,8 +17,8 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
-- 📋 [VTX-012 — Implement the bounded durable event store](#vtx-012)
-- 📋 [VTX-013 — Implement the transactional upstream mock](#vtx-013)
+- ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
+- 🟢 [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - 📋 [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - 📋 [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - 📋 [VTX-016 — Package the isolated container demonstration](#vtx-016)
@@ -386,7 +386,7 @@ Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state �
 - Area: controller
 - Milestone: M3
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-003](#vtx-003)
 - References: [telemetry](features/telemetry.md), [blockers](blockers.md#blk-002)
 
@@ -403,11 +403,11 @@ Build a SQLite queue with persistent identity, bounded retention and explicit lo
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/store` uses `modernc.org/sqlite` v1.53.0 (BSD-3, pure Go — no CGO needed, resolving that build implication). `Open` verifies `journal_mode=wal` and `synchronous=2` (FULL) on the actual connection, rejects `user_version`≠0/1 and corrupt files without modifying them, and stamps a random 16-byte stream_id into `meta`. `Insert` runs one short tx: `meta.next_seq` allocation (survives deletion of all rows — never `MAX(seq)`), per-tier count check, atomic oldest-row eviction + `counters.evicted` increment, event insert. `Offer`/`RunWriter` give the bounded nonblocking handoff (900/100 defaults) with per-tier volatile drop counters persisted on drain/Close/recovery; `Batch` is a short bounded read for the syncer; `DeleteAcked` deletes only matching stream+seq (gaps/foreign ignored); `Checkpoint` runs bounded `wal_checkpoint(PASSIVE)` with busy reporting; `Depth` exposes queue/age monitoring. Write failure marks storage unhealthy and rejects new offers as volatile losses. Verified 2026-10-12: 11 tests — pragma verification, seq non-reuse across full-delete+reopen, atomic per-tier eviction with counters, all-alarms saturation tier isolation, payload bound, handoff overflow volatile accounting, writer drain on shutdown, corrupt-file no-reset, incompatible version, ack-gap/foreign safety, bounded checkpoint; `go test -race` clean.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-013"></a>
 
@@ -417,7 +417,7 @@ Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state �
 - Area: simulator
 - Milestone: M3
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Ready 🟢
 - Depends on: [VTX-003](#vtx-003)
 - References: [control](features/control.md), [telemetry](features/telemetry.md)
 
@@ -438,7 +438,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-014"></a>
 
@@ -469,7 +469,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-015"></a>
 
@@ -500,7 +500,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-016"></a>
 
@@ -531,7 +531,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-017"></a>
 
@@ -562,7 +562,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-018"></a>
 
@@ -593,7 +593,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-019"></a>
 
@@ -624,7 +624,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-020"></a>
 
@@ -655,4 +655,4 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+Execute when dependencies are complete; capture actual evidence before marking Done.
