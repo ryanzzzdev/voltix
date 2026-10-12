@@ -24,6 +24,7 @@ limits:
 timing:
   cycle_period_ms: 1000
   read_deadline_ms: 200
+  write_deadline_ms: 100
   max_input_age_s: 2
   max_loop_gap_s: 2.5
 

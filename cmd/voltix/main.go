@@ -41,10 +41,11 @@ type config struct {
 		NormalSlewKWPerS float64 `yaml:"normal_slew_kw_per_s"`
 	} `yaml:"limits"`
 	Timing struct {
-		CyclePeriodMs  int     `yaml:"cycle_period_ms"`
-		ReadDeadlineMs int     `yaml:"read_deadline_ms"`
-		MaxInputAgeS   float64 `yaml:"max_input_age_s"`
-		MaxLoopGapS    float64 `yaml:"max_loop_gap_s"`
+		CyclePeriodMs   int     `yaml:"cycle_period_ms"`
+		ReadDeadlineMs  int     `yaml:"read_deadline_ms"`
+		WriteDeadlineMs int     `yaml:"write_deadline_ms"`
+		MaxInputAgeS    float64 `yaml:"max_input_age_s"`
+		MaxLoopGapS     float64 `yaml:"max_loop_gap_s"`
 	} `yaml:"timing"`
 	Telemetry struct {
 		StateDir        string `yaml:"state_dir"`
@@ -141,8 +142,10 @@ func main() {
 		Inverter:  inverter,
 		Meter:     meter,
 		Session:   session,
-		Snapshots: snaps,
-		Period:    time.Duration(c.Timing.CyclePeriodMs) * time.Millisecond,
+		Snapshots:   snaps,
+		Period:      time.Duration(c.Timing.CyclePeriodMs) * time.Millisecond,
+		ReadBudget:  time.Duration(c.Timing.ReadDeadlineMs) * time.Millisecond,
+		WriteBudget: time.Duration(c.Timing.WriteDeadlineMs) * time.Millisecond,
 		Policy: policy.New(policy.Config{
 			DischargeLimitW: int64(c.Limits.DischargeMaxKW * 1000),
 			ChargeLimitW:    int64(c.Limits.ChargeMaxKW * 1000),

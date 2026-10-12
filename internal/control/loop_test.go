@@ -61,7 +61,12 @@ func (s *fakeSession) Active() (dispatch.Command, bool) {
 	}
 	return *s.cmd, true
 }
-func (s *fakeSession) Drop() { s.mu.Lock(); s.drop++; s.mu.Unlock() }
+func (s *fakeSession) Drop() {
+	s.mu.Lock()
+	s.drop++
+	s.cmd = nil // real Drop invalidates the active intent
+	s.mu.Unlock()
+}
 func (s *fakeSession) Mono() time.Duration {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -150,11 +155,13 @@ func TestWriteFailureMarksUncertainNoStaleRetry(t *testing.T) {
 	if s1.Acknowledged != nil {
 		t.Fatal("failed write must mark ack uncertain")
 	}
-	// Next cycle still issues its own fresh decision — not a replayed write.
+	// Next cycle still issues its own fresh decision — not a replayed
+	// write — and ramps from the measured baseline (WriteFailed reset),
+	// not the unacknowledged 50 kW the failed write requested.
 	inv.writeErr = nil
 	s2 := l.Step(t0.Add(time.Second))
-	if s2.Acknowledged == nil || *s2.Acknowledged != 100_000 {
-		t.Fatalf("fresh write: %+v", s2)
+	if s2.Acknowledged == nil || *s2.Acknowledged != 50_000 {
+		t.Fatalf("fresh write ramps from measured: %+v", s2)
 	}
 	if w := inv.written(); len(w) != 2 {
 		t.Fatalf("writes: %v", w)
@@ -241,4 +248,103 @@ func TestDeviceFaultInhibits(t *testing.T) {
 	if snap.State != policy.Fault {
 		t.Fatalf("fault: %+v", snap)
 	}
+	// Contract: fault invalidates intent — recovery needs clear status
+	// plus a NEW dispatch; the old command must not silently resume.
+	if sess.drops() != 1 {
+		t.Fatalf("fault must drop active intent: %d drops", sess.drops())
+	}
+	if w := inv.written(); len(w) != 1 || w[0] != 0 {
+		t.Fatalf("fault must request zero, not a nonzero ramp: %v", w)
+	}
+	// Fault clears, same session: STANDBY — no auto-resume.
+	inv.read = invOK(0, 50)
+	s2 := l.Step(t0.Add(time.Second))
+	if s2.State != policy.Standby {
+		t.Fatalf("post-fault recovery requires fresh dispatch: %+v", s2)
+	}
+}
+
+// Audit R2: a read slower than MaxSnapshotAge must invalidate — the data
+// is too stale to decide on even though it succeeded.
+func TestSlowReadMarkedStale(t *testing.T) {
+	cfg := pcfg
+	cfg.MaxSnapshotAge = 10 * time.Millisecond
+	inv := &fakeInv{read: func() (device.InverterReading, error) {
+		time.Sleep(50 * time.Millisecond)
+		return device.InverterReading{Watts: 0, SoCPct: 50, Status: 4}, nil
+	}}
+	sess := activeSession(300, 30*time.Second)
+	l := New(LoopConfig{
+		Inverter: inv, Meter: &fakeMeter{read: metOK(0)},
+		Policy: policy.New(cfg), Session: sess,
+	})
+	snap := l.Step(t0)
+	if snap.State != policy.Degraded {
+		t.Fatalf("slow read must degrade: %+v", snap)
+	}
+	found := false
+	for _, r := range snap.Reasons {
+		found = found || r == policy.ReasonStaleInput
+	}
+	if !found {
+		t.Fatalf("want STALE_INPUT: %v", snap.Reasons)
+	}
+	if sess.drops() != 1 {
+		t.Fatalf("stale input must drop intent: %d", sess.drops())
+	}
+}
+
+// Audit R2: the read phase is bounded — a stuck endpoint cannot stall a
+// cycle past the configured deadline.
+func TestReadPhaseBounded(t *testing.T) {
+	cfg := pcfg
+	cfg.MaxSnapshotAge = 10 * time.Second // isolate the deadline path
+	inv := &fakeInv{read: func() (device.InverterReading, error) {
+		time.Sleep(300 * time.Millisecond)
+		return device.InverterReading{Watts: 0, SoCPct: 50}, nil
+	}}
+	l := New(LoopConfig{
+		Inverter: inv, Meter: &fakeMeter{read: metOK(0)},
+		Policy: policy.New(cfg), Session: &fakeSession{},
+		ReadBudget: 50 * time.Millisecond,
+	})
+	start := time.Now()
+	snap := l.Step(t0)
+	if d := time.Since(start); d > 200*time.Millisecond {
+		t.Fatalf("read phase not bounded: %v", d)
+	}
+	if snap.InverterOK {
+		t.Fatal("expired read must mark inverter failed")
+	}
+}
+
+// A write stuck past the write budget leaves the ack uncertain and the
+// ramp baseline reverts to measured, not the unconfirmed request.
+func TestWritePhaseBounded(t *testing.T) {
+	inv := &fakeInv{read: invOK(0, 50)}
+	slow := &slowWriter{fakeInv: inv, delay: 300 * time.Millisecond}
+	sess := activeSession(300, 30*time.Second)
+	l := New(LoopConfig{
+		Inverter: slow, Meter: &fakeMeter{read: metOK(0)},
+		Policy: policy.New(pcfg), Session: sess,
+		WriteBudget: 50 * time.Millisecond,
+	})
+	start := time.Now()
+	snap := l.Step(t0)
+	if d := time.Since(start); d > 300*time.Millisecond {
+		t.Fatalf("write phase not bounded: %v", d)
+	}
+	if snap.Acknowledged != nil {
+		t.Fatal("expired write must leave ack uncertain")
+	}
+}
+
+type slowWriter struct {
+	*fakeInv
+	delay time.Duration
+}
+
+func (s *slowWriter) SetPowerTargetW(w int32) error {
+	time.Sleep(s.delay)
+	return s.fakeInv.SetPowerTargetW(w)
 }

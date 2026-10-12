@@ -72,9 +72,19 @@ type Inputs struct {
 	SoCPct      float64
 	MeterW      int64 // measured site power, + export
 	MeterOK     bool
-	MeasuredAt  time.Time // monotonic receive time of the freshest reading
+	MeasuredAt  time.Time // acquisition start of the freshest reading
+	DecisionAt  time.Time // post-read decision time; zero falls back to Now
 	DeviceFault bool
 	Intent      *Intent // nil = no dispatch
+}
+
+// decisionAt returns the staleness reference time: DecisionAt when the
+// caller recorded it (post-read), otherwise Now.
+func (in Inputs) decisionAt() time.Time {
+	if in.DecisionAt.IsZero() {
+		return in.Now
+	}
+	return in.DecisionAt
 }
 
 // Decision is the supervisor's per-cycle outcome.
@@ -115,12 +125,14 @@ func (s *Supervisor) Step(in Inputs) Decision {
 
 	switch {
 	case in.DeviceFault:
+		// Contract: fault inhibits nonzero commands AND invalidates the
+		// intent — recovery requires clear status plus a fresh dispatch.
 		reason(ReasonDeviceFault)
-		d.State, d.TargetW = Fault, s.rampTo(in, 0, first, true)
+		d.State, d.Invalidate, d.TargetW = Fault, true, s.rampTo(in, 0, first, true)
 	case !in.InverterOK || !in.MeterOK || math.IsNaN(in.SoCPct) || math.IsInf(in.SoCPct, 0):
 		reason(ReasonInvalidInput)
 		d.State, d.Invalidate, d.TargetW = Degraded, true, s.rampTo(in, 0, first, gap)
-	case in.Now.Sub(in.MeasuredAt) > c.MaxSnapshotAge:
+	case in.decisionAt().Sub(in.MeasuredAt) > c.MaxSnapshotAge:
 		reason(ReasonStaleInput)
 		d.State, d.Invalidate, d.TargetW = Degraded, true, s.rampTo(in, 0, first, gap)
 	case gap:
@@ -206,5 +218,11 @@ func (s *Supervisor) rampTo(in Inputs, goal int64, first, useMeasured bool) int6
 	}
 	return base + clamp(goal-base, -s.cfg.SlewWPS, s.cfg.SlewWPS)
 }
+
+// WriteFailed records that the last requested target was not
+// acknowledged. Contract: slew is based on the previous *acknowledged*
+// target — after an uncertain write the next cycle ramps from fresh
+// measured output rather than an unconfirmed request.
+func (s *Supervisor) WriteFailed() { s.recovering = true }
 
 func clamp(v, lo, hi int64) int64 { return min(max(v, lo), hi) }

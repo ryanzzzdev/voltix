@@ -6,6 +6,7 @@ package control
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -49,13 +50,15 @@ type Session interface {
 
 // LoopConfig wires the loop's dependencies and bounds.
 type LoopConfig struct {
-	Inverter  Inverter
-	Meter     Meter
-	Policy    *policy.Supervisor
-	Session   Session
-	Period    time.Duration // nominal 1 Hz
-	Now       func() time.Time
-	Snapshots chan Snapshot // bounded; drops when full
+	Inverter    Inverter
+	Meter       Meter
+	Policy      *policy.Supervisor
+	Session     Session
+	Period      time.Duration // nominal 1 Hz
+	ReadBudget  time.Duration // contract: read-phase deadline, 200 ms
+	WriteBudget time.Duration // contract: write-phase deadline, 100 ms
+	Now         func() time.Time
+	Snapshots   chan Snapshot // bounded; drops when full
 }
 
 type Loop struct {
@@ -74,6 +77,12 @@ func New(cfg LoopConfig) *Loop {
 	}
 	if cfg.Period <= 0 {
 		cfg.Period = time.Second
+	}
+	if cfg.ReadBudget <= 0 {
+		cfg.ReadBudget = 200 * time.Millisecond
+	}
+	if cfg.WriteBudget <= 0 {
+		cfg.WriteBudget = 100 * time.Millisecond
 	}
 	return &Loop{cfg: cfg}
 }
@@ -98,7 +107,10 @@ func (l *Loop) Run(ctx context.Context) {
 // write is serialised through this single owner. Exported as Step for
 // deterministic tests that drive time themselves.
 func (l *Loop) Step(now time.Time) Snapshot {
-	r0 := time.Now()
+	// r0 sits on the configured clock so MeasuredAt/DecisionAt staleness
+	// arithmetic stays consistent under injected test clocks.
+	r0 := l.cfg.Now()
+	r0r := time.Now() // real clock for the reported phase duration
 	type invRes struct {
 		r   device.InverterReading
 		err error
@@ -111,12 +123,38 @@ func (l *Loop) Step(now time.Time) Snapshot {
 	metCh := make(chan metRes, 1)
 	go func() { r, err := l.cfg.Inverter.ReadInverter(); invCh <- invRes{r, err} }()
 	go func() { r, err := l.cfg.Meter.ReadMeter(); metCh <- metRes{r, err} }()
-	inv, met := <-invCh, <-metCh
-	readDur := time.Since(r0)
+	// Contract: the read phase is bounded — a stuck endpoint cannot stall
+	// the cycle past its deadline. The abandoned goroutine still exits when
+	// the endpoint's own socket deadline fires.
+	deadline := time.NewTimer(l.cfg.ReadBudget)
+	var inv invRes
+	var met metRes
+	gotInv, gotMet := false, false
+	for !(gotInv && gotMet) {
+		select {
+		case r := <-invCh:
+			inv, gotInv = r, true
+		case r := <-metCh:
+			met, gotMet = r, true
+		case <-deadline.C:
+			if !gotInv {
+				inv.err = errors.New("read phase deadline exceeded")
+			}
+			if !gotMet {
+				met.err = errors.New("read phase deadline exceeded")
+			}
+			gotInv, gotMet = true, true
+		}
+	}
+	deadline.Stop()
+	readDur := time.Since(r0r)
 
 	in := policy.Inputs{
-		Now:        now,
-		MeasuredAt: r0, // staleness == this cycle's read latency
+		Now: now,
+		// Acquisition-start is the conservative age bound: a slow but
+		// successful read counts toward staleness (audit R2).
+		MeasuredAt: r0,
+		DecisionAt: l.cfg.Now(),
 		InverterW:  inv.r.Watts,
 		InverterOK: inv.err == nil,
 		SoCPct:     inv.r.SoCPct,
@@ -140,12 +178,25 @@ func (l *Loop) Step(now time.Time) Snapshot {
 	}
 
 	w0 := time.Now()
-	if err := l.cfg.Inverter.SetPowerTargetW(int32(d.TargetW)); err != nil {
-		l.lastAck = nil // acknowledged output uncertain; no stale retry
-		l.writeErr = err
-	} else {
-		l.lastAck = &d.TargetW
-		l.writeErr = nil
+	// Bounded write phase; a timed-out or failed write leaves the
+	// acknowledgement unknown — the next cycle ramps from measured output
+	// (WriteFailed), not the unconfirmed request.
+	writeCh := make(chan error, 1)
+	go func() { writeCh <- l.cfg.Inverter.SetPowerTargetW(int32(d.TargetW)) }()
+	select {
+	case err := <-writeCh:
+		if err != nil {
+			l.lastAck = nil
+			l.writeErr = err
+			l.cfg.Policy.WriteFailed()
+		} else {
+			l.lastAck = &d.TargetW
+			l.writeErr = nil
+		}
+	case <-time.After(l.cfg.WriteBudget):
+		l.lastAck = nil
+		l.writeErr = errors.New("write phase deadline exceeded")
+		l.cfg.Policy.WriteFailed()
 	}
 	writeDur := time.Since(w0)
 
