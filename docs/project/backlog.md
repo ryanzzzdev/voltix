@@ -13,8 +13,8 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - ✅ [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
 - ✅ [VTX-007 — Verify the complete device integration slice](#vtx-007)
-- 📋 [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
-- 📋 [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
+- 🟢 [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
+- 🟢 [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - 📋 [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - 📋 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - 📋 [VTX-012 — Implement the bounded durable event store](#vtx-012)
@@ -29,7 +29,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 
 ## Delivery notes
 
-Next execution task: **VTX-007**, device-integration slice verification (VTX-003/004/005/006 all Done). VTX-007 closes M1. Refine unresolved details using evidence rather than extending the initial scope.
+Next execution tasks: **VTX-008** and **VTX-009** (both Ready; disjoint — pure policy package vs dispatch API — and may proceed in parallel). Then VTX-010 → VTX-011 closes M2. Refine unresolved details using evidence rather than extending the initial scope.
 
 M2: VTX-008 and VTX-009 may proceed in parallel after M1, then VTX-010 → VTX-011. M3 queue/receiver work (VTX-012/013) can overlap M1/M2 after bootstrap; VTX-014 joins them, and VTX-015 joins telemetry with verified control. M4 packaging and native verification feed fault automation, documentation and exit review.
 
@@ -262,7 +262,7 @@ The test found one real test-authoring bug during development: the watchdog dead
 - Area: controller
 - Milestone: M2
 - Priority: High
-- Status: Backlog 📋
+- Status: Ready 🟢
 - Depends on: [VTX-007](#vtx-007)
 - References: [control](features/control.md)
 
@@ -293,7 +293,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: controller
 - Milestone: M2
 - Priority: High
-- Status: Backlog 📋
+- Status: Ready 🟢
 - Depends on: [VTX-007](#vtx-007)
 - References: [control](features/control.md)
 

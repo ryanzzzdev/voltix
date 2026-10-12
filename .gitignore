@@ -4,3 +4,4 @@ sim/.venv/
 __pycache__/
 *.py[cod]
 .state/
+.devin/config.local.json

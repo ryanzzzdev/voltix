@@ -17,10 +17,10 @@ type fakeServer struct {
 
 	mu      sync.Mutex
 	regs    map[uint16]uint16
+	log     [][2]int // [fc, addr] of each request; [-1, addr] marks unmapped reads
 	delay   time.Duration
 	garbage bool
 	hangup  bool // close the connection mid-request
-	log     [][2]int
 }
 
 func newFakeServer(t *testing.T, regs map[uint16]uint16) *fakeServer {
@@ -134,7 +134,7 @@ func inverterRegs(w, wsf, soc, socsf, st, evtHi, evtLo uint16) map[uint16]uint16
 		40070: 103, 40071: 50,
 		40122: 124, 40123: 24,
 		40148: 704, 40149: 65,
-		40215: EndMarkerID, 40216: 0, // end marker is ID+L=0
+		40215: EndMarkerID, 40216: 0, // end marker is ID+L=0, two registers
 		AddrInvW: w, AddrInvWSF: wsf,
 		AddrInvChaState: soc, AddrInvChaStateSF: socsf,
 		AddrInvSt:   st,
