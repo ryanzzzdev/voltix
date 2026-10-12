@@ -27,13 +27,11 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
 - ✅ [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
+- ✅ [VTX-021 — Independently audit milestone completion](#vtx-021)
+
 ## Delivery notes
 
-Next execution tasks: **VTX-008** and **VTX-009** (both Ready; disjoint — pure policy package vs dispatch API — and may proceed in parallel). Then VTX-010 → VTX-011 closes M2. Refine unresolved details using evidence rather than extending the initial scope.
-
-M2: VTX-008 and VTX-009 may proceed in parallel after M1, then VTX-010 → VTX-011. M3 queue/receiver work (VTX-012/013) can overlap M1/M2 after bootstrap; VTX-014 joins them, and VTX-015 joins telemetry with verified control. M4 packaging and native verification feed fault automation, documentation and exit review.
-
-Tasks with unfinished dependencies remain Backlog; promote to Ready when dependencies and remaining scope checks are satisfied. Later packaging tasks should be refined at the M3 boundary. Keep active work small and coordinate file ownership if multiple agents work in parallel. Next unused ID: VTX-021.
+Independent audit VTX-021 found unmet completion criteria and two reproduced control regressions; all five reopened tasks were corrected and re-verified 2026-10-12 (see per-task notes, commits e05caa2/6715588/8ba02d9/695846f). Remaining: [VTX-022](#vtx-022) — privileged-environment verification of true ENOSPC and packet-level faults, open follow-up under decision 004. Findings and priorities: [audit](evidence/review/m4-independent-audit.md). Next unused task ID: VTX-023.
 
 <a id="vtx-001"></a>
 
@@ -376,6 +374,10 @@ Prove the M2 behaviour against real simulator and dispatch processes.
 
 ### Notes
 
+Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
+
+Corrective cycle 2026-10-12 (commit e05caa2): device fault now sets `Invalidate` — intent dropped, FAULT output ramped to 0, and post-clear recovery requires a newly accepted dispatch (was: stale intent silently resumed). Read/write phases are bounded by `read_deadline_ms`/`write_deadline_ms` (now actually wired through strict config); `MeasuredAt` is acquisition-start and `DecisionAt` is post-read, so a slow successful read beyond `max_input_age_s` reports STALE_INPUT and invalidates; a failed/expired write calls `Policy.WriteFailed`, resetting the ramp baseline to measured output rather than the unacknowledged request. New regressions: fault drop+zero+no-auto-resume, slow-read staleness, bounded read/write phases, write-failure rebaseline. `go test ./internal/control ./internal/policy` green; `-race ./...` clean; full integration e2e 45.8 s.
+
 Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-012"></a>
@@ -500,6 +502,10 @@ Connect the real queue to the controller and establish M3 acceptance evidence.
 
 ### Notes
 
+Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
+
+Corrective cycle 2026-10-12 (commit 8ba02d9): `TestStorageWriteFailureSurfacedAndRecoverable` re-execs under `RLIMIT_FSIZE` with SIGXFSZ ignored — a real kernel write refusal (EFBIG, surfaced as SQLite disk I/O error 778) proving the commit-error -> unhealthy -> volatile-drop -> recovery path. A genuine filesystem ENOSPC requires a bounded mount this host cannot provide; recorded as accepted scope revision in decision 004 with an explicit open follow-up ([VTX-022](#vtx-022)) rather than claimed equivalence.
+
 Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-016"></a>
@@ -562,6 +568,10 @@ Verify the controller as an unprivileged systemd service in an explicitly select
 
 ### Notes
 
+Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
+
+Corrective cycle 2026-10-12 (commit 6715588): the harness can no longer touch a developer install. install.sh/remove.sh accept `VOLTIX_UNIT_NAME`/`VOLTIX_BIN_PATH`/`VOLTIX_CONFIG_DIR`/`VOLTIX_STATE_NAME` overrides, `VOLTIX_REFUSE_EXISTING=1` aborts on any pre-existing path, and native-test runs under PID-unique names with an EXIT-trap cleanup, canonical-path guard snapshots, and post-cleanup leak assertions. remove.sh resolves the StateDirectory symlink layout and only removes resolved paths under the per-user trees. Verified: 13/13 including `all test-created resources removed` and `canonical install paths untouched`.
+
 Execute when dependencies are complete; capture actual evidence before marking Done.
 
 <a id="vtx-018"></a>
@@ -592,6 +602,10 @@ Provide repeatable network/process faults with machine-checkable acceptance resu
 `make fault-test` (scripts/fault-test.sh) brings up a fresh Compose stack and asserts A, B, C3, C4, D machine-checkably; C5 is delegated to `make native-test` because the verification plan requires native restart evidence that container restarts cannot supply. BLK-003 boundary: unprivileged netns/NET_ADMIN and CAP_NET_RAW are denied on this host, so faults are application/process-level (sim set_online/delay, mock pause/drop-after-commit, docker pause=SIGSTOP) — recorded as unavailable prerequisites in the harness output, not silently skipped; request/timeout/reconnect is evidenced through app counters (upload_failed, InverterOK transitions, sim watchdog_expired). Verified 2026-10-12 ~04:30 UTC — 16/16: B fallback start expiry+0s, output zero expiry+2s; C3 voltix reports inverter failure AND sim watchdog trips 10s after last refresh with independent ramp to 0; C4 docker-pause -> watchdog 10s, unpause -> STANDBY (loop-gap intent drop, no jump); A queue grows during mock pause with dispatch still accepted and loop ACTIVE, drains after resume; D lost response recorded and replay deduplicated (receiver rows == uploaded). Harness found+fixed: REV increment inside $() subshell (now bumped in caller), 28s duration within the 30s contract bound, drain polls instead of fixed sleeps.
 
 ### Notes
+
+Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
+
+Corrective cycle 2026-10-12 (commit 695846f): scenario D now baselines receiver rows and `upload_failed` before arming drop-after-commit, requires both to advance (commit-then-drop actually exercised), then requires `receiver rows == uploaded` exactly after replay — duplicates or unresolved conflicts break equality. Scenario B asserts output reached 0 within the slew window while the sim watchdog was NOT expired, proving a controller fallback write rather than a watchdog ramp. Verified 17/17 on a fresh Compose stack.
 
 Execute when dependencies are complete; capture actual evidence before marking Done.
 
@@ -655,4 +669,72 @@ Close the local portfolio milestone only when its documented evidence supports c
 
 ### Notes
 
+Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
+
+Corrective cycle 2026-10-12 (commit 8ba02d9): `make check` resolves `gofmt` beside the selected `$(GO)` toolchain and fails explicitly when the formatter is missing or errors — verified with missing and erroring shims; a real `gofmt` drift it then caught in cmd/voltix/main.go was fixed. Exit review updated: row F re-labelled, fault/native counts refreshed, unavailable checks stay open. Stale docs/evidence links: scan found none remaining; roadmap header/table already reconciled by the audit pass.
+
 Execute when dependencies are complete; capture actual evidence before marking Done.
+
+<a id="vtx-021"></a>
+
+## VTX-021 — Independently audit milestone completion
+
+- Repository: voltix
+- Area: integration
+- Milestone: M4
+- Priority: High
+- Status: Done ✅
+- Depends on: None (independent review of claimed completed work)
+- References: [Audit findings](evidence/review/m4-independent-audit.md)
+
+### Outcome
+
+Check whether actual implementation and evidence support the claimed milestone completion.
+
+### Done when
+
+- Compare contracts and exits with source, artifacts and existing tests.
+- Independently verify relevant checks where feasible, recording unavailable checks.
+- Record actionable findings and reconcile affected task/milestone status without changing production code.
+
+### Completion evidence
+
+Reviewed baseline 95745cb, source, scripts, exit artifacts and contracts. Existing uncached race tests and all 26 simulator tests pass with loopback access. Two targeted regressions fail: retained intent after device fault and ineffective read-freshness calculation. See the audit for integration results and verification limitations. Documentation changes are uncommitted; no code fix or commit performed.
+
+### Notes
+
+Audit completion is not M4 completion. Reopened VTX-011, 015, 017, 018 and 020 own the remaining work.
+
+<a id="vtx-022"></a>
+
+## VTX-022 — Verify privileged-environment fault scenarios
+
+- Repository: voltix
+- Area: verification
+- Milestone: M4
+- Priority: Normal
+- Status: Backlog 📋
+- Depends on: [VTX-018](#vtx-018), [decision 004](decisions/004-local-fault-injection-scope.md)
+- References: [verification](features/verification.md), [blockers](blockers.md#blk-004)
+
+### Outcome
+
+In a privileged or disposable environment (unprivileged userns with
+networking, or root), exercise the checks this host cannot run.
+
+### Done when
+
+- True filesystem ENOSPC on the telemetry store (bounded mount or quota),
+  observing surfaced errors, contained loss and recovery.
+- Packet-level network faults (tc/netem or iptables inside a netns) for
+  delayed/dropped/reordered device and upstream traffic, with optional
+  packet capture.
+- OOM-under-load on the native unit while telemetry is queued.
+- Update the exit-review matrix rows and close BLK-004's remainder.
+
+### Completion evidence
+
+Not run — no privileged environment is available on the development host
+(`unshare -r -n` uid_map denied; /run/user tmpfs unsafe to fill). The
+EFBIG-class store test and application/process-level fault suite cover
+the same handling paths meanwhile; see decision 004.

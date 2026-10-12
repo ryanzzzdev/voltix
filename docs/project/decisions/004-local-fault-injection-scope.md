@@ -1,6 +1,6 @@
 # 004 — Local fault-injection scope on an unprivileged host
 
-Date: 2026-10-14
+Date: 2026-10-12
 Status: Accepted scope revision after the M4 independent audit.
 
 ## Context
@@ -11,7 +11,7 @@ that the delivered fault suite substitutes process/application-level
 faults and never injected true disk-full, yet rows were presented as
 verified equivalents.
 
-Measured host limits (2026-10-14):
+Measured host limits (2026-10-12):
 
 - `unshare -r -n` fails on `/proc/self/uid_map` — no unprivileged network
   namespaces, so `tc`/`iptables`-class packet faults are impossible here.

@@ -1,7 +1,7 @@
 # Voltix roadmap
 
 Updated: 2026-10-12
-Status: M3 complete — bounded SQLite telemetry, transactional receiver and ack-validated upload verified end to end ([findings](../evidence/telemetry/findings.md)). Earlier: [M2 control](../evidence/control/findings.md), [M1 device integration](../evidence/device-integration/findings.md).
+Status: Audit findings corrected and re-verified 2026-10-12 — milestones Complete under the fault-injection scope revision in [decision 004](decisions/004-local-fault-injection-scope.md); privileged-environment checks remain open as VTX-022. See [audit](evidence/review/m4-independent-audit.md).
 
 Build a reproducible, simulated battery-site controller that demonstrates device integration, explicit operating policies, and failure recovery. This is an engineering portfolio, not a certified controller or a Tesla-compatible product. Scope and rationale: [decision 002](decisions/002-scope-and-delivery.md).
 

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-12
 
-No obstacle blocks beginning bootstrap or protocol investigation. These are explicit implementation gates, not reports of failed attempts. Task execution status remains in the [backlog](backlog.md).
+Independent review reopened completion verification. Existing resolution records remain historical; BLK-004 tracks the outstanding acceptance gap. Task execution status remains in the [backlog](backlog.md).
 
 <a id="blk-001"></a>
 
@@ -42,3 +42,16 @@ No obstacle blocks beginning bootstrap or protocol investigation. These are expl
 - Evidence: Current workspace permits documentation writes; systemd/VM/container privileges have not been inspected or exercised for this project.
 - Next action / owner: Implementing agent inspects available local facilities at packaging time and chooses a disposable VM/test environment. Request missing environment input only if necessary; record unavailable checks accurately.
 - Resolution: Resolved 2026-10-12 — `systemctl --user` provides a real user manager (systemd 259) with cgroup v2 memory delegation: VTX-017 verified a user unit end to end (restart, journal, MemoryMax=128MiB cgroup-enforced, state-dir ownership) with zero root/host changes. Unprivileged user namespaces are DENIED (uid_map write fails), so VTX-018's network faults are application/process-level (sim delay/offline/corrupt, receiver pause/drop, SIGSTOP/SIGKILL, ulimit -f) rather than netns/tc/iptables — recorded as an explicit boundary, not skipped.
+
+<a id="blk-004"></a>
+
+## BLK-004 — Completion evidence does not satisfy all required gates
+
+- Identified: 2026-10-12
+- Status: Partially resolved
+- Affected tasks: VTX-015, VTX-018, VTX-020, VTX-022; M3/M4 acceptance.
+- Impact: Control and harness defects were corrected and re-verified 2026-10-12. Storage write failure is now exercised with a real kernel-enforced fault (RLIMIT_FSIZE/EFBIG, SQLite error 778). True filesystem ENOSPC, packet-level network faults and packet capture remain impossible on this host — accepted scope revision recorded in [decision 004](decisions/004-local-fault-injection-scope.md) rather than claimed as verified.
+- Evidence: [Independent audit](evidence/review/m4-independent-audit.md), updated repository-root evidence/demo/exit-review.md row F and limitations; corrective commits e05caa2, 6715588, 8ba02d9, 695846f.
+- Blocking scope: Milestone acceptance resolved under the decision-004 revised scope; privileged-environment checks remain as follow-up VTX-022.
+- Next action / owner: VTX-022 in a privileged or disposable environment (netns, bounded mount, OOM-under-load).
+- Resolution: Scope revision accepted 2026-10-12; privileged checks pending environment.

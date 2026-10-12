@@ -51,6 +51,8 @@ Initial resource exercise: 30-minute 1 Hz run with a five-minute telemetry outag
 
 Hosted CI is an optional execution venue until a remote is authorised and available. VTX-020 must label it unverified if no hosted run exists; local success is not CI evidence. Power-cut/hardware, ARM deployment and real equipment remain excluded.
 
+Fault-injection scope on the development host is application/process-level plus a kernel-enforced file-size-limit storage fault; true packet-level injection, packet capture and filesystem ENOSPC are unavailable without privileges and are carried as follow-up work — see [decision 004](../decisions/004-local-fault-injection-scope.md).
+
 ## Presentation deliverables
 
 README with purpose, architecture, limitations and verified prerequisites; native operations runbook; reproducible demo; three-minute recording of selected failures with readable explanations; final evidence linking each required scenario to its result. The full suite supplies correctness evidence beyond the recording.

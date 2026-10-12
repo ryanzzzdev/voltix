@@ -5,6 +5,11 @@ criteria and the verification-matrix rows, reconciled against actual
 results on the development host (Ubuntu, systemd 259, Docker 29.7.2,
 Go 1.27.2, uv/CPython 3.13).
 
+Revised 2026-10-12 after the independent audit
+(`docs/project/evidence/review/m4-independent-audit.md`): row F
+re-labelled, fault/native check counts updated to the re-run totals, and
+the unavailable checks remain explicitly open rather than claimed.
+
 ## Acceptance-matrix reconciliation
 
 | ID | Scenario | Result | Evidence |
@@ -20,7 +25,7 @@ Go 1.27.2, uv/CPython 3.13).
 | C5 | Fast restart | Met (native) | native-test: SIGKILL → new boot session in 2.68 s; old session → 409 |
 | D | Lost acknowledgement | Met | fault-test: upload_failed recorded; replay deduplicated (rows == uploaded); also M3 unit/e2e |
 | E | Saturation/alarm flood | Met (M3) | e2e small-cap overflow: per-tier eviction counters, control intact; all-alarms unit test |
-| F | Disk full/busy | **Partially met** | Store-unavailable → volatile drops + health degrade verified (M3); real ENOSPC fault NOT injected — open follow-up |
+| F | Disk full/busy | Met (EFBIG class); true ENOSPC open | `TestStorageWriteFailureSurfacedAndRecoverable`: RLIMIT_FSIZE subprocess, kernel write refusal → unhealthy + volatile drop + intact reads + recovery. Filesystem ENOSPC needs a bounded mount — unavailable; see [decision 004](../../docs/project/decisions/004-local-fault-injection-scope.md) |
 | G | Loop gap/invalid samples | Met | SIGSTOP e2e (M2) + fault-test C4 resume → STANDBY, no dt-jump |
 | H | Resource/catch-up run | Met | 30-min run + 5-min outage; see measurements below |
 
@@ -52,8 +57,8 @@ Measured 2026-10-12, duration 1806 s, voltix on native harness ports:
 | `make sim-test` | sim physics + wire (26) | yes |
 | `make integration` | device + control + telemetry e2e | yes |
 | `make demo` / `demo-down` | isolated stack, bounded readiness, deterministic teardown | yes (twice fresh) |
-| `make fault-test` | A/B/C3/C4/D — 16 checks | yes — 16/16 |
-| `make native-test` | user unit, restart, MemoryMax, journal — 11 checks | yes — 11/11 |
+| `make fault-test` | A/B/C3/C4/D — 17 checks | yes — 17/17 (2026-10-12, post-audit baselines) |
+| `make native-test` | user unit, restart, MemoryMax, journal + isolation — 13 checks | yes — 13/13 (2026-10-12) |
 
 CI configuration: `.github/workflows/ci.yml` covers gofmt/vet/test/-race/
 build + sim tests + loopback integration — nonprivileged checks only.
@@ -63,8 +68,11 @@ authorised or configured; no run has been observed.
 
 ## Limitations and follow-ups
 
-- **F (ENOSPC)**: not exercised — only store-unavailable degradation is
-  proven. Follow-up: tmpfs-quota fault harness.
+- **F (disk-full)**: kernel-enforced write failure (EFBIG via
+  RLIMIT_FSIZE) exercised at the store durability boundary — surfaced,
+  contained, recoverable. A genuine filesystem ENOSPC still requires a
+  bounded mount this host cannot provide; tracked as open follow-up under
+  decision 004, not claimed as passed.
 - **Packet-level faults**: unprivileged netns/NET_ADMIN/CAP_NET_RAW
   denied on this host; faults are application/process-level. A packet
   trace could not be captured; request→timeout→reconnect is evidenced
