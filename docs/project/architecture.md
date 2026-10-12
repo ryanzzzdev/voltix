@@ -99,4 +99,4 @@ A separate runbook will document service install/removal, startup, logs, state/r
 
 ## Current state and remaining gates
 
-Only documentation exists. Git status in this environment reports no usable Git repository; no initialisation, module creation, dependencies, tests, or service installation occurred during planning. [Open questions](blockers.md) identify protocol, driver, and native-environment verification gates without describing them as failed attempts.
+Only documentation exists. The Git repository was initialised on 2026-10-12 with the planning baseline committed at user request; no module creation, dependencies, tests, or service installation has occurred. [Open questions](blockers.md) identify protocol, driver, and native-environment verification gates without describing them as failed attempts.

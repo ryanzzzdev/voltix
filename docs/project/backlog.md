@@ -128,7 +128,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-First execution task after planning; build only the minimum needed for the device slice.
+First execution task after planning; build only the minimum needed for the device slice. The Git repository was initialised and the documentation baseline committed on 2026-10-12 at user request, ahead of this task; the remaining bootstrap scope (toolchain pins, module, ignore rules, Makefile) is unchanged.
 
 <a id="vtx-004"></a>
 
