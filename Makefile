@@ -2,7 +2,7 @@ GO ?= $(shell command -v go || echo $(HOME)/.local/go/bin/go)
 UV ?= uv
 SHELL := /bin/bash
 
-.PHONY: all build test check sim-env sim-test integration demo demo-down native-test clean
+.PHONY: all build test check sim-env sim-test integration demo demo-down native-test fault-test clean
 
 all: build
 
@@ -49,6 +49,11 @@ demo-down:
 # are confined to ~/.config/systemd/user and ~/.local/state/voltix.
 native-test:
 	./scripts/native-test.sh
+
+# Repeatable fault scenarios (A,B,C3,C4,D) on the Compose demo; C5 is
+# covered by native-test (native restart evidence). No root needed.
+fault-test:
+	./scripts/fault-test.sh
 
 clean:
 	rm -rf bin

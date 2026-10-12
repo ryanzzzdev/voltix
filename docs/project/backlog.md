@@ -23,7 +23,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
 - ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
-- 🟢 [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
+- ✅ [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - 📋 [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
 - 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
@@ -572,7 +572,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M4
 - Priority: Normal
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-015](#vtx-015), [VTX-016](#vtx-016), [VTX-017](#vtx-017)
 - References: [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
@@ -589,7 +589,7 @@ Provide repeatable network/process faults with machine-checkable acceptance resu
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`make fault-test` (scripts/fault-test.sh) brings up a fresh Compose stack and asserts A, B, C3, C4, D machine-checkably; C5 is delegated to `make native-test` because the verification plan requires native restart evidence that container restarts cannot supply. BLK-003 boundary: unprivileged netns/NET_ADMIN and CAP_NET_RAW are denied on this host, so faults are application/process-level (sim set_online/delay, mock pause/drop-after-commit, docker pause=SIGSTOP) — recorded as unavailable prerequisites in the harness output, not silently skipped; request/timeout/reconnect is evidenced through app counters (upload_failed, InverterOK transitions, sim watchdog_expired). Verified 2026-10-12 ~04:30 UTC — 16/16: B fallback start expiry+0s, output zero expiry+2s; C3 voltix reports inverter failure AND sim watchdog trips 10s after last refresh with independent ramp to 0; C4 docker-pause -> watchdog 10s, unpause -> STANDBY (loop-gap intent drop, no jump); A queue grows during mock pause with dispatch still accepted and loop ACTIVE, drains after resume; D lost response recorded and replay deduplicated (receiver rows == uploaded). Harness found+fixed: REV increment inside $() subshell (now bumped in caller), 28s duration within the 30s contract bound, drain polls instead of fixed sleeps.
 
 ### Notes
 
