@@ -14,7 +14,7 @@ Build a reproducible, simulated battery-site controller that demonstrates device
 | M1 — Device integration | Reproducible simulator and Go device adapter | Complete | Planning baseline |
 | M2 — Supervisory control | Validated dispatch, limits, expiry and recovery | Complete | M1 |
 | M3 — Durable telemetry | Bounded persistent queue and deduplicated replay | Complete | M2 |
-| M4 — Linux demo and verification | Reproducible container demo, native service checks, failure evidence | Planned | M1–M3 |
+| M4 — Linux demo and verification | Reproducible container demo, native service checks, failure evidence | Complete | M1–M3 |
 
 Documentation setup evidence: [VTX-001](backlog.md#vtx-001). Planning evidence: [VTX-002](backlog.md#vtx-002). These completions do not imply application functionality. No calendar delivery dates are committed; reassess effort after M1.
 

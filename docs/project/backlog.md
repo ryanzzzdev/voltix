@@ -25,7 +25,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - ✅ [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - ✅ [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
-- 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
+- ✅ [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
 ## Delivery notes
 
@@ -634,7 +634,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-019](#vtx-019)
 - References: [roadmap](roadmap.md), [verification](features/verification.md)
 
@@ -651,7 +651,7 @@ Close the local portfolio milestone only when its documented evidence supports c
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`evidence/demo/exit-review.md` reconciles all 14 verification-matrix rows with actual results; `.github/workflows/ci.yml` defines nonprivileged hosted checks (gofmt/vet/test/-race/build, sim tests, loopback integration) while demo/fault/native stay the documented local path — hosted execution explicitly unverified (no remote authorised or observed). Resource exercise (matrix H): `scripts/resource-run.sh` — 30 min at 1 Hz with ~5-min mock outage: 1805 events all uploaded, depth peaked 298 at resume then drained to <=5 in ~10 s (replay far faster than production), upload_failed=14 bounded, RSS 14.4->21.1->20.0 MB, loop reads 1-8 ms throughout, zero persistent loss. Re-ran all check commands locally 2026-10-12: gofmt clean, vet clean, go test + -race green, sim 26/26, make demo/fault-test (16/16)/native-test (11/11). Open follow-ups recorded: real ENOSPC fault injection, packet-level faults (netns denied), OOM-under-load, hosted CI. No accounts created, nothing pushed.
 
 ### Notes
 
