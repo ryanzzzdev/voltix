@@ -24,7 +24,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
 - ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - ✅ [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
-- 📋 [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
+- ✅ [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
 - 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
 ## Delivery notes
@@ -603,7 +603,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: documentation
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-018](#vtx-018)
 - References: [verification](features/verification.md)
 
@@ -620,7 +620,7 @@ Make Voltix understandable and reproducible to another engineer.
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+docs/operations-runbook.md covers verified setup, credentials (env-only tokens + demo placeholders), Compose/native operation, state reset, the per-fault playbook, cleanup traps and explicit limitations. README rewritten: current architecture, all make targets, measured claims (commit rate, RSS, restart time, watchdog/fallback timings) with the dev-host caveat, updated doc index. Terminal recording: evidence/demo/demo.typescript + .timing (util-linux `script`, replayable via scriptreplay — chosen artifact policy: committed <1MB, no hosted upload); recorded 2026-10-12, shows dispatch -200 kW ACTIVE, link-loss -> DEGRADED + independent watchdog trip, no-jump recovery, telemetry outage + drain. All README/runbook/deploy links checked programmatically; every documented command was exercised during this campaign on the dev host. Verified 2026-10-12 ~05:15 UTC.
 
 ### Notes
 
