@@ -1,7 +1,7 @@
 GO ?= go
 UV ?= uv
 
-.PHONY: all build test check sim-env clean
+.PHONY: all build test check sim-env sim-test integration clean
 
 all: build
 
@@ -17,6 +17,12 @@ check:
 
 sim-env:
 	cd sim && $(UV) sync
+
+sim-test:
+	cd sim && $(UV) run pytest -q
+
+integration:
+	$(GO) test -tags=integration -v ./internal/device/
 
 clean:
 	rm -rf bin

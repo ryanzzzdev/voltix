@@ -12,7 +12,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-004 — Verify and freeze the simulator wire profile](#vtx-004)
 - ✅ [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - ✅ [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
-- 📋 [VTX-007 — Verify the complete device integration slice](#vtx-007)
+- ✅ [VTX-007 — Verify the complete device integration slice](#vtx-007)
 - 📋 [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - 📋 [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - 📋 [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
@@ -231,9 +231,9 @@ The library's dial uses a fixed 5 s connect timeout (per-connect bound, document
 - Area: integration
 - Milestone: M1
 - Priority: High
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-005](#vtx-005), [VTX-006](#vtx-006)
-- References: [device profile](features/device-profile.md), [verification](features/verification.md)
+- References: [device profile](features/device-profile.md), [verification](features/verification.md), [findings](../../evidence/device-integration/findings.md)
 
 ### Outcome
 
@@ -248,11 +248,11 @@ Demonstrate Go-to-Python reads, writes and failure recovery and review the M1 ex
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`make integration` (new target, `go test -tags=integration`) launches `python -m voltix_sim` as a subprocess and exercises the full slice in `TestDeviceIntegrationSlice` (14.3 s): discovery on both endpoints, live SoC/baseline changes, accepted-vs-measured +250/-250 kW including the negative charging path, WSet-window readback matching the golden write fixture, watchdog expiry under continuous polling to zero output with Evt1 bit0, bounded delayed/offline replies and recovery, and corrupt-value rejection. All M1 exit criteria confirmed; details and limitations in [evidence/device-integration/findings.md](../../evidence/device-integration/findings.md).
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+The test found one real test-authoring bug during development: the watchdog deadline runs from the accepted write, not from when tracking was first observed — corrected before acceptance.
 
 <a id="vtx-008"></a>
 
