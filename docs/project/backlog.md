@@ -18,7 +18,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
-- 🟢 [VTX-013 — Implement the transactional upstream mock](#vtx-013)
+- ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - 📋 [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - 📋 [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - 📋 [VTX-016 — Package the isolated container demonstration](#vtx-016)
@@ -417,7 +417,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: simulator
 - Milestone: M3
 - Priority: Normal
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-003](#vtx-003)
 - References: [control](features/control.md), [telemetry](features/telemetry.md)
 
@@ -434,7 +434,7 @@ Provide a Go dispatcher and durable receiver for acceptance testing, in the root
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/upstream` provides `Receiver` and `Dispatcher` in the root module. The receiver serves `POST /api/telemetry` (bearer auth via constant-time compare; ≤100 events, ≤256 KiB body, strict unknown-field rejection → 400; envelope/event validation → 422; conflicting content → 409) plus test-only controls on distinct routes: pause/resume (503 while paused), reset (row wipe, disposable envs only), drop-after-commit (commits then `panic(http.ErrAbortHandler)` — deterministic lost response), and count. `commitBatch` is one atomic tx on a WAL+FULL `received` table keyed (stream_id, seq_id): identical payloads are no-op acks, differing payloads reject the batch; acked IDs return only after `tx.Commit`. `Dispatcher` learns `boot_session_id` from `GET /api/status` and issues increasing revisions with UUID command IDs. Verified 2026-10-12: 6 tests — commit/ack/dedup/conflict, restart persistence, auth+schema+bounds, commit-then-drop ack loss with idempotent retry, pause/reset; `go test -race` clean.
 
 ### Notes
 
