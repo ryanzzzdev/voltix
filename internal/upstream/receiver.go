@@ -96,7 +96,10 @@ func (r *Receiver) handleTelemetry(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	r.mu.Lock()
-	paused, drop := r.paused, r.dropAfterWrite
+	paused := r.paused
+	// One-shot: consume the drop flag for this request only.
+	drop := !paused && r.dropAfterWrite
+	r.dropAfterWrite = false
 	r.mu.Unlock()
 	if paused {
 		fail(w, http.StatusServiceUnavailable, "receiver paused")

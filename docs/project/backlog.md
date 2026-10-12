@@ -19,7 +19,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
-- 📋 [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
+- ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - 📋 [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - 📋 [VTX-016 — Package the isolated container demonstration](#vtx-016)
 - 📋 [VTX-017 — Package and verify the native Linux service](#vtx-017)
@@ -448,7 +448,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: controller
 - Milestone: M3
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-012](#vtx-012), [VTX-013](#vtx-013)
 - References: [telemetry](features/telemetry.md)
 
@@ -465,7 +465,7 @@ Forward retained events reliably without holding database transactions across ne
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/syncer.Uploader` runs a single drain loop per stream — inherent one-in-flight. `round` reads ≤BatchMax (default 100) via a short bounded `Batch` tx, POSTs to the receiver (3 s default HTTP deadline, bearer token), and validates the ack envelope before pruning: stream_id must match the local stream, every acked seq must be a member of the sent batch (subset semantics — partial acks prune only acked rows), undecodable/foreign/unsent acks are `ErrAckMismatch` and delete nothing. Transient failures (transport, 5xx, 429) take jittered (±25%) exponential backoff 1 s→30 s, reset on success; 4xx/ack-mismatch become `ConfigFault` with slow recheck (30 s) — no hot loop, no data deletion. Empty queues sleep FlushWait (5 s); full batches continue immediately. Verified 2026-10-12: 8 tests against the real store+receiver plus canned ack fakes — drain+prune, 250-event batching, one-shot lost-response replay with receiver dedup (stable identities, no duplicate rows), transient outage+resume, partial-ack pruning, foreign/unsent/undecodable acks deleting nothing, 401 config-fault flag, bounded shutdown mid-request; `go test -race` clean. Note: receiver `drop-after-commit` is now one-shot (auto-clears) — the realistic single lost response.
 
 ### Notes
 
