@@ -1,16 +1,40 @@
 #!/usr/bin/env bash
 # VTX-017 native verification: voltix as an unprivileged systemd --user
 # service. Starts the sim + telemetry mock as plain host processes on the
-# native harness ports, installs the unit, and checks user identity, state
-# dir, journal, MemoryMax, restart behaviour and post-restart session
-# rejection. All test-created resources are removed on exit.
+# native harness ports, installs the unit under PID-unique names, and
+# checks user identity, state dir, journal, MemoryMax, restart behaviour
+# and post-restart session rejection.
+#
+# Isolation (audit R3): every filesystem resource the harness creates is
+# tagged with $$ and routed through install.sh/remove.sh overrides, and
+# install refuses to run if a same-named path already exists. The
+# canonical install paths are snapshotted before/after so the script can
+# prove it never touched a real installation. Resources are removed by an
+# EXIT trap — cleanup also runs when a prerequisite fails mid-way.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DISPATCH="http://127.0.0.1:8190"
 MOCK="http://127.0.0.1:8191"
 DTOK="voltix-native-dispatch"
 TTOK="voltix-native-telemetry"
-UNITDIR="$HOME/.local/state/voltix"
+
+TAG="voltix-nt-$$"
+UNIT_NAME="$TAG.service"
+export VOLTIX_UNIT_NAME="$UNIT_NAME" \
+       VOLTIX_BIN_PATH="$HOME/.local/libexec/$TAG" \
+       VOLTIX_CONFIG_DIR="$HOME/.config/$TAG" \
+       VOLTIX_STATE_NAME="$TAG" \
+       VOLTIX_REFUSE_EXISTING=1
+UNIT_PATH="$HOME/.config/systemd/user/$UNIT_NAME"
+UNITDIR="$HOME/.local/state/$TAG"
+
+# Canonical install paths the harness must never touch.
+GUARD_PATHS=("$HOME/.config/systemd/user/voltix.service"
+             "$HOME/.local/libexec/voltix"
+             "$HOME/.config/voltix"
+             "$HOME/.local/state/voltix")
+guard() { for p in "${GUARD_PATHS[@]}"; do [ -e "$p" ] || [ -L "$p" ] && echo "$p"; done; }
+
 SIM_PID=""; MOCK_PID=""; MOCK_DIR=""
 PASS=0; FAIL=0
 
@@ -30,10 +54,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
+GUARD_BEFORE=$(guard)
+
 say "prereqs"
 command -v systemctl >/dev/null || { echo "no systemctl"; exit 1; }
 systemctl --user show-environment >/dev/null 2>&1 || { echo "no user manager"; exit 1; }
 (cd "$ROOT" && make build >/dev/null) || { echo "build failed"; exit 1; }
+for port in 2512 2513 2514 8190 8191; do
+  (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null && { exec 3>&- 3<&-; echo "port $port already in use"; exit 1; } || true
+done
 
 say "start sim (2512-2514) + upstream-mock (8191)"
 (cd "$ROOT/sim" && uv run python -m voltix_sim --host 127.0.0.1 \
@@ -45,15 +74,15 @@ VOLTIX_TELEMETRY_TOKEN=$TTOK "$ROOT/bin/upstream-mock" \
 MOCK_PID=$!
 sleep 2
 
-say "install + start user service"
+say "install + start user service ($UNIT_NAME)"
 "$ROOT/deploy/systemd/install.sh" >/dev/null
-systemctl --user start voltix.service
+systemctl --user start "$UNIT_NAME"
 for i in $(seq 1 20); do S=$(status) && break; sleep 1; done
 [ -n "${S:-}" ] && ok "service started, status endpoint live" || bad "status endpoint never came up"
 SESSION1=$(echo "$S" | jget "['boot_session_id']")
 say "boot session: $SESSION1"
 
-MPID=$(systemctl --user show voltix -p MainPID --value)
+MPID=$(systemctl --user show "$UNIT_NAME" -p MainPID --value)
 OWNER=$(stat -c %u "/proc/$MPID" 2>/dev/null || echo -1)
 [ "$OWNER" = "$(id -u)" ] && ok "runs as unprivileged user (uid $OWNER)" || bad "process owner uid=$OWNER"
 
@@ -64,11 +93,11 @@ U=$(stat -L -c %u "$UNITDIR" 2>/dev/null || echo -1)
 [ "$MODE" = "700" ] && [ "$U" = "$(id -u)" ] \
   && ok "state dir mode=0700 owner=user" || bad "state dir mode=$MODE uid=$U"
 
-journalctl --user -u voltix --no-pager -n 5 2>/dev/null | grep -q voltix \
+journalctl --user -u "$UNIT_NAME" --no-pager -n 5 2>/dev/null | grep -q voltix \
   && ok "journal visible via journalctl --user" || bad "no journal lines found"
 
-MEM=$(systemctl --user show voltix -p MemoryMax --value)
-CG=$(systemctl --user show voltix -p ControlGroup --value)
+MEM=$(systemctl --user show "$UNIT_NAME" -p MemoryMax --value)
+CG=$(systemctl --user show "$UNIT_NAME" -p ControlGroup --value)
 CGMAX=""
 [ -n "$CG" ] && CGMAX=$(cat "/sys/fs/cgroup/$CG/memory.max" 2>/dev/null)
 if [ "$MEM" != "infinity" ] && [ -n "$MEM" ]; then
@@ -115,6 +144,24 @@ CNT=$(curl -s "$MOCK/control/count" | python3 -c "import json,sys;print(json.loa
 sleep 1
 TEL=$(status | jget "['telemetry']['uploaded']")
 [ "${TEL:-0}" -gt 0 ] && ok "uploader acked events (uploaded=$TEL)" || bad "uploaded=$TEL"
+
+say "result: $PASS passed, $FAIL failed (restart=${RT}s)"
+[ "$FAIL" -eq 0 ] || exit 1
+
+# Explicit cleanup + post-checks (the EXIT trap is idempotent: remove.sh
+# tolerates absent resources and the helper pids are already dead).
+cleanup
+say "isolation checks"
+LEAK=""
+for p in "$UNIT_PATH" "$VOLTIX_BIN_PATH" "$VOLTIX_CONFIG_DIR" "$UNITDIR" \
+         "$HOME/.config/systemd/user/default.target.wants/$UNIT_NAME"; do
+  { [ -e "$p" ] || [ -L "$p" ]; } && LEAK="$LEAK $p"
+done
+[ -z "$LEAK" ] && ok "all test-created resources removed" || bad "leaked:$LEAK"
+GUARD_AFTER=$(guard)
+[ "$GUARD_AFTER" = "$GUARD_BEFORE" ] \
+  && ok "canonical install paths untouched" \
+  || bad "canonical paths changed: before='$GUARD_BEFORE' after='$GUARD_AFTER'"
 
 say "result: $PASS passed, $FAIL failed (restart=${RT}s)"
 [ "$FAIL" -eq 0 ]

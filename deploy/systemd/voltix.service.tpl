@@ -1,17 +1,18 @@
 # Voltix edge controller — systemd USER unit (no root, no host service).
-# Install to ~/.config/systemd/user/ via deploy/systemd/install.sh.
+# Template rendered by deploy/systemd/install.sh; @...@ placeholders are
+# substituted with the install paths. Do not install this file directly.
 [Unit]
 Description=Voltix edge controller (user demo instance)
 After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/libexec/voltix -config %h/.config/voltix/native.yaml
-EnvironmentFile=%h/.config/voltix/env
+ExecStart=@BIN_PATH@ -config @CONFIG_PATH@
+EnvironmentFile=@ENV_PATH@
 # User-manager StateDirectory ignores StateDirectoryMode (creates 0777
 # under systemd 259); chmod explicitly before start instead.
-StateDirectory=voltix
-ExecStartPre=/usr/bin/chmod 0700 %S/voltix
+StateDirectory=@STATE_NAME@
+ExecStartPre=/usr/bin/chmod 0700 %S/@STATE_NAME@
 Restart=on-failure
 RestartSec=2
 MemoryMax=128M
