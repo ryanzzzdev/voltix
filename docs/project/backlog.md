@@ -14,7 +14,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
 - ✅ [VTX-007 — Verify the complete device integration slice](#vtx-007)
 - ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
-- 🟢 [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
+- ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - 📋 [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - 📋 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - 📋 [VTX-012 — Implement the bounded durable event store](#vtx-012)
@@ -293,7 +293,7 @@ Deliberate simplification for testability: snapshot freshness is a single `Measu
 - Area: controller
 - Milestone: M2
 - Priority: High
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-007](#vtx-007)
 - References: [control](features/control.md)
 
@@ -310,7 +310,7 @@ Accept bounded local commands with replay-resistant expiry and observable acknow
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/dispatch` implements `POST /api/dispatch` and `GET /api/status` behind a constant-time bearer check, with a random 16-byte boot session ID per start. `Session.accept` enforces controller/boot-session identity (409), UUID `command_id` and finite `target_kw` (422), strictly increasing revisions (409 — old revisions stay rejected after expiry, per-boot-session state), exact-retry idempotence preserving the original monotonic deadline (202), same-revision changed-fields conflict (409), `issued_at <= now < valid_until` with a 0<life<=30 s bound (422), and converts the remaining wall lifetime to a monotonic deadline at acceptance. `Active` checks BOTH the mono deadline and wall `valid_until`, so forward clock jumps expire conservatively and backward steps cannot extend. Bodies are capped at 4 KiB with unknown-field rejection (400); status is redacted (no token/secret fields); heartbeats (status polls) do not extend leases. Verified 2026-10-12: 10 tests pass including injected forward/backward clock shifts, restart replay rejection, idempotent retry, and 64-way concurrent accepts; `go test -race ./...` clean.
 
 ### Notes
 
