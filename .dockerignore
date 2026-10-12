@@ -1,0 +1,8 @@
+.git
+.state
+bin
+sim/.venv
+**/__pycache__
+.campaign
+evidence
+docs

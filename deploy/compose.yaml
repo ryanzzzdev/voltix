@@ -1,0 +1,62 @@
+# Isolated Voltix demo topology.
+#
+#   field network:   voltix <-> sim (Modbus inverter :1502, meter :1503)
+#   upstream network: voltix <-> mock (telemetry :8081)
+#
+# The controller straddles both networks; nothing else can cross. Host
+# bindings are loopback-only: dispatch 127.0.0.1:8080, sim control
+# 127.0.0.1:1504, mock controls 127.0.0.1:8081.
+#
+# Demo tokens below are local-only placeholders, not secrets; override via
+# VOLTIX_DISPATCH_TOKEN / VOLTIX_TELEMETRY_TOKEN in the environment.
+
+name: voltix-demo
+
+networks:
+  field:
+  upstream:
+
+services:
+  voltix:
+    build:
+      context: ..
+      dockerfile: deploy/docker/go.Dockerfile
+    command: ["/usr/local/bin/voltix", "-config", "/etc/voltix/config.yaml"]
+    environment:
+      VOLTIX_DISPATCH_TOKEN: "${VOLTIX_DISPATCH_TOKEN:-voltix-demo-dispatch}"
+      VOLTIX_TELEMETRY_TOKEN: "${VOLTIX_TELEMETRY_TOKEN:-voltix-demo-telemetry}"
+    volumes:
+      - ../configs/compose.yaml:/etc/voltix/config.yaml:ro
+      - voltix-state:/state
+    ports:
+      - "127.0.0.1:8180:8080"
+    networks: [field, upstream]
+    depends_on: [sim, mock]
+    restart: unless-stopped
+
+  sim:
+    build:
+      context: ..
+      dockerfile: deploy/docker/sim.Dockerfile
+    ports:
+      - "127.0.0.1:1504:1504"  # test control socket: fault injection
+    networks: [field]
+    restart: unless-stopped
+
+  mock:
+    build:
+      context: ..
+      dockerfile: deploy/docker/go.Dockerfile
+    command: ["/usr/local/bin/upstream-mock", "-listen", "0.0.0.0:8081", "-dir", "/state"]
+    environment:
+      VOLTIX_TELEMETRY_TOKEN: "${VOLTIX_TELEMETRY_TOKEN:-voltix-demo-telemetry}"
+    volumes:
+      - mock-state:/state
+    ports:
+      - "127.0.0.1:8081:8081"   # telemetry + /control/* test routes
+    networks: [upstream]
+    restart: unless-stopped
+
+volumes:
+  voltix-state:
+  mock-state:

@@ -9,13 +9,9 @@ devices:
   inverter:
     host: 127.0.0.1
     port: 1502
-    unit_id: 1
-    sunspec_base_address: 40000
   meter:
     host: 127.0.0.1
     port: 1503
-    unit_id: 1
-    sunspec_base_address: 40000
 
 limits:
   soc_min_pct: 5
@@ -28,8 +24,6 @@ limits:
 timing:
   cycle_period_ms: 1000
   read_deadline_ms: 200
-  write_deadline_ms: 100
-  cycle_budget_ms: 350
   max_input_age_s: 2
   max_loop_gap_s: 2.5
 
@@ -44,4 +38,3 @@ telemetry:
 upstream:
   dispatch_listen: 127.0.0.1:8080
   telemetry_url: http://127.0.0.1:8081/api/telemetry
-  http_deadline_ms: 3000

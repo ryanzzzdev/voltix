@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -70,7 +71,10 @@ func loadConfig(path string) (config, error) {
 	if err != nil {
 		return c, err
 	}
-	return c, yaml.Unmarshal(b, &c)
+	// Strict: silently-ignored keys would hide operator misconfiguration.
+	dec := yaml.NewDecoder(bytes.NewReader(b))
+	dec.KnownFields(true)
+	return c, dec.Decode(&c)
 }
 
 func main() {

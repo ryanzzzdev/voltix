@@ -21,8 +21,8 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
-- 📋 [VTX-016 — Package the isolated container demonstration](#vtx-016)
-- 📋 [VTX-017 — Package and verify the native Linux service](#vtx-017)
+- ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
+- 🟢 [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - 📋 [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - 📋 [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
 - 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
@@ -510,7 +510,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: deployment
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-011](#vtx-011), [VTX-014](#vtx-014)
 - References: [architecture](architecture.md), [verification](features/verification.md)
 
@@ -527,7 +527,7 @@ Provide a one-command local site with independently controllable communication p
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`cmd/upstream-mock` (new binary) serves internal/upstream with its test-only /control/* routes. deploy/docker/go.Dockerfile builds voltix + upstream-mock into one debian-slim image (uid 10001); sim.Dockerfile pins pymodbus==3.15.0 on python:3.13-slim (uid 10002); deploy/compose.yaml wires field (voltix<->sim) + upstream (voltix<->mock) networks with only voltix straddling both; host bindings loopback-only (dispatch 8180 — 8080 was occupied on the dev host —, sim control 1504, mock 8081); disposable named volumes removed by `down -v`. `make demo` does bounded readiness (30 s auth'd status probe, 10 s control-socket probe); `make demo-down` removes containers/networks/volumes. deploy/README.md documents prerequisites, ports, sim-control ops, mock test routes and the dispatch schema. Side fixes: config decode is now strict (KnownFields) — example.yaml's silently-ignored keys (unit_id, write_deadline_ms, etc.) were removed; upstream-mock Addr bug fixed. Verified 2026-10-12 ~03:00 UTC on the dev host (Docker 29.7.2): clean down -v + up cycle, dispatch accepted -> ACTIVE ack=inv=site -200 kW across networks, sim set_fault -> FAULT/DEVICE_FAULT in loop status, telemetry drained to mock (count>0), deterministic teardown.
 
 ### Notes
 
@@ -541,7 +541,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: deployment
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Ready 🟢
 - Depends on: [VTX-015](#vtx-015)
 - References: [architecture](architecture.md), [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
