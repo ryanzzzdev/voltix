@@ -1,0 +1,8 @@
+{
+  "name": "error-partial-wset-write",
+  "description": "Writing WSet alone without the Ena/Mod window is rejected; it must not refresh the watchdog either.",
+  "unit_id": 1,
+  "request_pdu_hex": "10 9CEC 0002 04 0003 D090",
+  "expected_response_pdu_hex": "90 03",
+  "notes": "Simulator policy: only the full 4-register window is a valid power command."
+}

@@ -1,0 +1,11 @@
+{
+  "name": "discovery-suns-marker",
+  "description": "Read the SunSpec identifier at the base address.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C40 0002",
+  "expected_response_pdu_hex": "03 04 5375 6E53",
+  "decode": {
+    "bytes": "0x53756E53",
+    "ascii": "SunS"
+  }
+}

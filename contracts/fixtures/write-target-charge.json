@@ -1,0 +1,13 @@
+{
+  "name": "write-target-charge",
+  "description": "Atomic FC16 write with int32 target -250000 W = 0xFFFC2F70 (negative charging power exercises the signed path).",
+  "unit_id": 1,
+  "request_pdu_hex": "10 9CEA 0004 08 0001 0001 FFFC 2F70",
+  "expected_response_pdu_hex": "10 9CEA 0004",
+  "decode": {
+    "WSetEna": "ENABLED(1)",
+    "WSetMod": "WATTS(1)",
+    "WSet": -250000,
+    "kw": -250.0
+  }
+}

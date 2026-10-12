@@ -1,0 +1,8 @@
+{
+  "name": "error-write-readonly",
+  "description": "Write to read-only inverter status register St is rejected.",
+  "unit_id": 1,
+  "request_pdu_hex": "10 9CAC 0001 02 0004",
+  "expected_response_pdu_hex": "90 02",
+  "notes": "Exception 02 ILLEGAL DATA ADDRESS for read-only/out-of-map writes."
+}

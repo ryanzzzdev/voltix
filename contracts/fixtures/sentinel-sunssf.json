@@ -1,0 +1,11 @@
+{
+  "name": "sentinel-sunssf",
+  "description": "W_SF returns sunssf sentinel 0x8000; any scaled value is unusable.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C95 0001",
+  "expected_response_pdu_hex": "03 02 8000",
+  "decode": {
+    "W_SF": "0x8000",
+    "decode": "INVALID"
+  }
+}

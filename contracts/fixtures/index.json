@@ -1,0 +1,23 @@
+{
+  "fixtures": [
+    "discovery-model-headers.json",
+    "discovery-suns-marker.json",
+    "error-bad-address.json",
+    "error-partial-wset-write.json",
+    "error-write-readonly.json",
+    "inverter-charge.json",
+    "inverter-discharge.json",
+    "meter-export.json",
+    "meter-import.json",
+    "sentinel-chastate.json",
+    "sentinel-sunssf.json",
+    "sentinel-w.json",
+    "soc-boundaries.json",
+    "soc-normal.json",
+    "write-target-charge.json",
+    "write-target-discharge.json",
+    "write-target-zero.json"
+  ],
+  "format": "PDU-level hex without MBAP (TCP) framing or RTU CRC",
+  "byte_order": "big-endian per register; register order high->low word for 32-bit points (SunSpec default)"
+}

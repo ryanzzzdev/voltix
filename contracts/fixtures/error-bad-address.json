@@ -1,0 +1,7 @@
+{
+  "name": "error-bad-address",
+  "description": "Read of an unmapped register inside a declared gap is rejected.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C3F 0002",
+  "expected_response_pdu_hex": "83 02"
+}

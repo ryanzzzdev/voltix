@@ -9,7 +9,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-001 — Establish project-management standards](#vtx-001)
 - ✅ [VTX-002 — Establish the implementation plan and initial backlog](#vtx-002)
 - ✅ [VTX-003 — Bootstrap the minimal development workspace](#vtx-003)
-- 🟢 [VTX-004 — Verify and freeze the simulator wire profile](#vtx-004)
+- ✅ [VTX-004 — Verify and freeze the simulator wire profile](#vtx-004)
 - 📋 [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - 📋 [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
 - 📋 [VTX-007 — Verify the complete device integration slice](#vtx-007)
@@ -138,7 +138,7 @@ Done in one checkpoint of the M1 campaign. `make test` has no Go tests yet; firs
 - Area: documentation
 - Milestone: M1
 - Priority: High
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-002](#vtx-002)
 - References: [device profile](features/device-profile.md), [blockers](blockers.md#blk-001)
 
@@ -155,11 +155,11 @@ Turn the selected SunSpec subset into an independently checked register contract
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+Pinned `sunspec/models` at `90b4a331dcca1d6eac69c1bead952fddcc5852e0` (2026-08-20, Apache-2.0) and vendored models 1/103/124/203/704 plus LICENSE under `contracts/upstream/`. `contracts/generate_profile.py` derives `contracts/sunspec-profile.json` — base 40000, unit IDs, model order and per-point offsets/types/access/scale factors/sentinels, plus the atomic FC16 WSetEna..WSet write window — and 17 golden PDU fixtures covering discovery, discharge/charge (negative watts), SoC boundaries, meter import/export, sentinels and exception cases. Fixtures were computed from upstream JSONs before either implementation exists and spot-checked by hand (e.g. -250000 W = 0xFFFC2F70; 40170 = 0x9CEA). BLK-001 resolved. Enums verified from upstream symbols (WSetMod WATTS=1, ChaSt DISCHARGING/CHARGING, St MPPT=4/FAULT=7).
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Meter positive=export and the 10 s watchdog refresh rule are declared simulator policy in the manifest, not manufacturer claims. Adapter must read SF registers dynamically even though the profile fixes their values.
 
 <a id="vtx-005"></a>
 

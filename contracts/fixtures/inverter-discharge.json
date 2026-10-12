@@ -1,0 +1,13 @@
+{
+  "name": "inverter-discharge",
+  "description": "Inverter W register reading +250.0 kW (discharging). W int16 raw 2500 with W_SF=2 -> 2500 x 10^2 = 250000 W.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C94 0002",
+  "expected_response_pdu_hex": "03 04 09C4 0002",
+  "decode": {
+    "W_raw": 2500,
+    "W_SF": 2,
+    "watts": 250000,
+    "kw": 250.0
+  }
+}

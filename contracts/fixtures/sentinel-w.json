@@ -1,0 +1,11 @@
+{
+  "name": "sentinel-w",
+  "description": "Inverter W register returns int16 sentinel 0x8000 = not implemented; decoder must reject, not scale it.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C94 0002",
+  "expected_response_pdu_hex": "03 04 8000 0002",
+  "decode": {
+    "W_raw": "0x8000",
+    "decode": "INVALID"
+  }
+}

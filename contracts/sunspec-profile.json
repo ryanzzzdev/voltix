@@ -1,0 +1,2701 @@
+{
+  "profile": "voltix-sunspec-v1",
+  "description": "Restricted SunSpec profile for the Voltix simulated site. Not universal model conformance; unsupported points serve the type sentinel or a documented fixed value.",
+  "upstream": {
+    "repository": "github.com/sunspec/models",
+    "revision": "90b4a331dcca1d6eac69c1bead952fddcc5852e0",
+    "license": "Apache-2.0 (see upstream/LICENSE)",
+    "files": [
+      "json/model_1.json",
+      "json/model_103.json",
+      "json/model_124.json",
+      "json/model_203.json",
+      "json/model_704.json"
+    ]
+  },
+  "address_base": 40000,
+  "suns_marker": {
+    "address": 40000,
+    "value": [
+      21365,
+      28243
+    ]
+  },
+  "end_marker": {
+    "id": 65535,
+    "length": 0
+  },
+  "endpoints": {
+    "inverter": {
+      "unit_id": 1,
+      "default_port": 1502,
+      "model_order": [
+        1,
+        103,
+        124,
+        704
+      ],
+      "end_marker_address": 40215
+    },
+    "meter": {
+      "unit_id": 1,
+      "default_port": 1503,
+      "model_order": [
+        1,
+        203
+      ],
+      "end_marker_address": 40177
+    }
+  },
+  "models": {
+    "inverter": [
+      {
+        "id": 1,
+        "start_address": 40002,
+        "declared_length_L": 66,
+        "total_registers": 68,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40002,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 1
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40003,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 66
+          },
+          {
+            "name": "Mn",
+            "offset": 2,
+            "address": 40004,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "Md",
+            "offset": 18,
+            "address": 40020,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "Opt",
+            "offset": 34,
+            "address": 40036,
+            "size": 8,
+            "type": "string",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          },
+          {
+            "name": "Vr",
+            "offset": 42,
+            "address": 40044,
+            "size": 8,
+            "type": "string",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          },
+          {
+            "name": "SN",
+            "offset": 50,
+            "address": 40052,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "DA",
+            "offset": 66,
+            "address": 40068,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "Pad",
+            "offset": 67,
+            "address": 40069,
+            "size": 1,
+            "type": "pad",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          }
+        ]
+      },
+      {
+        "id": 103,
+        "start_address": 40070,
+        "declared_length_L": 50,
+        "total_registers": 52,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40070,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 103
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40071,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 50
+          },
+          {
+            "name": "A",
+            "offset": 2,
+            "address": 40072,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphA",
+            "offset": 3,
+            "address": 40073,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphB",
+            "offset": 4,
+            "address": 40074,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphC",
+            "offset": 5,
+            "address": 40075,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "A_SF",
+            "offset": 6,
+            "address": 40076,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "PPVphAB",
+            "offset": 7,
+            "address": 40077,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PPVphBC",
+            "offset": 8,
+            "address": 40078,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PPVphCA",
+            "offset": 9,
+            "address": 40079,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphA",
+            "offset": 10,
+            "address": 40080,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphB",
+            "offset": 11,
+            "address": 40081,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphC",
+            "offset": 12,
+            "address": 40082,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "V_SF",
+            "offset": 13,
+            "address": 40083,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "W",
+            "offset": 14,
+            "address": 40084,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "W_SF"
+          },
+          {
+            "name": "W_SF",
+            "offset": 15,
+            "address": 40085,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 2
+          },
+          {
+            "name": "Hz",
+            "offset": 16,
+            "address": 40086,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "Hz_SF"
+          },
+          {
+            "name": "Hz_SF",
+            "offset": 17,
+            "address": 40087,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "VA",
+            "offset": 18,
+            "address": 40088,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VA_SF"
+          },
+          {
+            "name": "VA_SF",
+            "offset": 19,
+            "address": 40089,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "VAr",
+            "offset": 20,
+            "address": 40090,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VAr_SF"
+          },
+          {
+            "name": "VAr_SF",
+            "offset": 21,
+            "address": 40091,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "PF",
+            "offset": 22,
+            "address": 40092,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "PF_SF",
+            "offset": 23,
+            "address": 40093,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -3
+          },
+          {
+            "name": "WH",
+            "offset": 24,
+            "address": 40094,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "WH_SF"
+          },
+          {
+            "name": "WH_SF",
+            "offset": 26,
+            "address": 40096,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "DCA",
+            "offset": 27,
+            "address": 40097,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "DCA_SF"
+          },
+          {
+            "name": "DCA_SF",
+            "offset": 28,
+            "address": 40098,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "DCV",
+            "offset": 29,
+            "address": 40099,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "DCV_SF"
+          },
+          {
+            "name": "DCV_SF",
+            "offset": 30,
+            "address": 40100,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "DCW",
+            "offset": 31,
+            "address": 40101,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "DCW_SF"
+          },
+          {
+            "name": "DCW_SF",
+            "offset": 32,
+            "address": 40102,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "TmpCab",
+            "offset": 33,
+            "address": 40103,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "Tmp_SF"
+          },
+          {
+            "name": "TmpSnk",
+            "offset": 34,
+            "address": 40104,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "Tmp_SF"
+          },
+          {
+            "name": "TmpTrns",
+            "offset": 35,
+            "address": 40105,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "Tmp_SF"
+          },
+          {
+            "name": "TmpOt",
+            "offset": 36,
+            "address": 40106,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "Tmp_SF"
+          },
+          {
+            "name": "Tmp_SF",
+            "offset": 37,
+            "address": 40107,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "St",
+            "offset": 38,
+            "address": 40108,
+            "size": 1,
+            "type": "enum16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "symbols": {
+              "1": "OFF",
+              "2": "SLEEPING",
+              "3": "STARTING",
+              "4": "MPPT",
+              "5": "THROTTLED",
+              "6": "SHUTTING_DOWN",
+              "7": "FAULT",
+              "8": "STANDBY"
+            }
+          },
+          {
+            "name": "StVnd",
+            "offset": 39,
+            "address": 40109,
+            "size": 1,
+            "type": "enum16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "Evt1",
+            "offset": 40,
+            "address": 40110,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295,
+            "symbols": {
+              "0": "GROUND_FAULT",
+              "1": "DC_OVER_VOLT",
+              "2": "AC_DISCONNECT",
+              "3": "DC_DISCONNECT",
+              "4": "GRID_DISCONNECT",
+              "5": "CABINET_OPEN",
+              "6": "MANUAL_SHUTDOWN",
+              "7": "OVER_TEMP",
+              "8": "OVER_FREQUENCY",
+              "9": "UNDER_FREQUENCY",
+              "10": "AC_OVER_VOLT",
+              "11": "AC_UNDER_VOLT",
+              "12": "BLOWN_STRING_FUSE",
+              "13": "UNDER_TEMP",
+              "14": "MEMORY_LOSS",
+              "15": "HW_TEST_FAILURE"
+            }
+          },
+          {
+            "name": "Evt2",
+            "offset": 42,
+            "address": 40112,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "EvtVnd1",
+            "offset": 44,
+            "address": 40114,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "EvtVnd2",
+            "offset": 46,
+            "address": 40116,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "EvtVnd3",
+            "offset": 48,
+            "address": 40118,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "EvtVnd4",
+            "offset": 50,
+            "address": 40120,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          }
+        ]
+      },
+      {
+        "id": 124,
+        "start_address": 40122,
+        "declared_length_L": 24,
+        "total_registers": 26,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40122,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 124
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40123,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 24
+          },
+          {
+            "name": "WChaMax",
+            "offset": 2,
+            "address": 40124,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "WChaMax_SF"
+          },
+          {
+            "name": "WChaGra",
+            "offset": 3,
+            "address": 40125,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "WChaDisChaGra_SF"
+          },
+          {
+            "name": "WDisChaGra",
+            "offset": 4,
+            "address": 40126,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": true,
+            "sentinel": 65535,
+            "scale_factor_ref": "WChaDisChaGra_SF"
+          },
+          {
+            "name": "StorCtl_Mod",
+            "offset": 5,
+            "address": 40127,
+            "size": 1,
+            "type": "bitfield16",
+            "access": "RW",
+            "mandatory": true,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "CHARGE",
+              "1": "DiSCHARGE"
+            }
+          },
+          {
+            "name": "VAChaMax",
+            "offset": 6,
+            "address": 40128,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "VAChaMax_SF"
+          },
+          {
+            "name": "MinRsvPct",
+            "offset": 7,
+            "address": 40129,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "MinRsvPct_SF"
+          },
+          {
+            "name": "ChaState",
+            "offset": 8,
+            "address": 40130,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "ChaState_SF"
+          },
+          {
+            "name": "StorAval",
+            "offset": 9,
+            "address": 40131,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "StorAval_SF"
+          },
+          {
+            "name": "InBatV",
+            "offset": 10,
+            "address": 40132,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "InBatV_SF"
+          },
+          {
+            "name": "ChaSt",
+            "offset": 11,
+            "address": 40133,
+            "size": 1,
+            "type": "enum16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "1": "OFF",
+              "2": "EMPTY",
+              "3": "DISCHARGING",
+              "4": "CHARGING",
+              "5": "FULL",
+              "6": "HOLDING",
+              "7": "TESTING"
+            }
+          },
+          {
+            "name": "OutWRte",
+            "offset": 12,
+            "address": 40134,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "InOutWRte_SF"
+          },
+          {
+            "name": "InWRte",
+            "offset": 13,
+            "address": 40135,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "InOutWRte_SF"
+          },
+          {
+            "name": "InOutWRte_WinTms",
+            "offset": 14,
+            "address": 40136,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "InOutWRte_RvrtTms",
+            "offset": 15,
+            "address": 40137,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "InOutWRte_RmpTms",
+            "offset": 16,
+            "address": 40138,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "ChaGriSet",
+            "offset": 17,
+            "address": 40139,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "PV",
+              "1": "GRID"
+            }
+          },
+          {
+            "name": "WChaMax_SF",
+            "offset": 18,
+            "address": 40140,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 1
+          },
+          {
+            "name": "WChaDisChaGra_SF",
+            "offset": 19,
+            "address": 40141,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "VAChaMax_SF",
+            "offset": 20,
+            "address": 40142,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "MinRsvPct_SF",
+            "offset": 21,
+            "address": 40143,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "ChaState_SF",
+            "offset": 22,
+            "address": 40144,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "StorAval_SF",
+            "offset": 23,
+            "address": 40145,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "InBatV_SF",
+            "offset": 24,
+            "address": 40146,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -1
+          },
+          {
+            "name": "InOutWRte_SF",
+            "offset": 25,
+            "address": 40147,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          }
+        ]
+      },
+      {
+        "id": 704,
+        "start_address": 40148,
+        "declared_length_L": 65,
+        "total_registers": 67,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40148,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 704
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40149,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 65
+          },
+          {
+            "name": "PFWInjEna",
+            "offset": 2,
+            "address": 40150,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            },
+            "comments": [
+              "Set Power Factor (when injecting active power)"
+            ]
+          },
+          {
+            "name": "PFWInjEnaRvrt",
+            "offset": 3,
+            "address": 40151,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "PFWInjRvrtTms",
+            "offset": 4,
+            "address": 40152,
+            "size": 2,
+            "type": "uint32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "PFWInjRvrtRem",
+            "offset": 6,
+            "address": 40154,
+            "size": 2,
+            "type": "uint32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "PFWAbsEna",
+            "offset": 8,
+            "address": 40156,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            },
+            "comments": [
+              "Set Power Factor (when absorbing active power)"
+            ]
+          },
+          {
+            "name": "PFWAbsEnaRvrt",
+            "offset": 9,
+            "address": 40157,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "PFWAbsRvrtTms",
+            "offset": 10,
+            "address": 40158,
+            "size": 2,
+            "type": "uint32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "PFWAbsRvrtRem",
+            "offset": 12,
+            "address": 40160,
+            "size": 2,
+            "type": "uint32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "WMaxLimPctEna",
+            "offset": 14,
+            "address": 40162,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            },
+            "comments": [
+              "Limit Maximum Active Power Generation"
+            ]
+          },
+          {
+            "name": "WMaxLimPct",
+            "offset": 15,
+            "address": 40163,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "WMaxLimPct_SF"
+          },
+          {
+            "name": "WMaxLimPctRvrt",
+            "offset": 16,
+            "address": 40164,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "WMaxLimPct_SF"
+          },
+          {
+            "name": "WMaxLimPctEnaRvrt",
+            "offset": 17,
+            "address": 40165,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "WMaxLimPctRvrtTms",
+            "offset": 18,
+            "address": 40166,
+            "size": 2,
+            "type": "uint32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "WMaxLimPctRvrtRem",
+            "offset": 20,
+            "address": 40168,
+            "size": 2,
+            "type": "uint32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "WSetEna",
+            "offset": 22,
+            "address": 40170,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            },
+            "comments": [
+              "Set Active Power Level (may be negative for charging)"
+            ]
+          },
+          {
+            "name": "WSetMod",
+            "offset": 23,
+            "address": 40171,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "W_MAX_PCT",
+              "1": "WATTS"
+            }
+          },
+          {
+            "name": "WSet",
+            "offset": 24,
+            "address": 40172,
+            "size": 2,
+            "type": "int32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 2147483648,
+            "scale_factor_ref": "WSet_SF"
+          },
+          {
+            "name": "WSetRvrt",
+            "offset": 26,
+            "address": 40174,
+            "size": 2,
+            "type": "int32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 2147483648,
+            "scale_factor_ref": "WSet_SF"
+          },
+          {
+            "name": "WSetPct",
+            "offset": 28,
+            "address": 40176,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "WSetPct_SF"
+          },
+          {
+            "name": "WSetPctRvrt",
+            "offset": 29,
+            "address": 40177,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "WSetPct_SF"
+          },
+          {
+            "name": "WSetEnaRvrt",
+            "offset": 30,
+            "address": 40178,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "WSetRvrtTms",
+            "offset": 31,
+            "address": 40179,
+            "size": 2,
+            "type": "uint32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "WSetRvrtRem",
+            "offset": 33,
+            "address": 40181,
+            "size": 2,
+            "type": "uint32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "VarSetEna",
+            "offset": 35,
+            "address": 40183,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            },
+            "comments": [
+              "Set Reactive Power Level"
+            ]
+          },
+          {
+            "name": "VarSetMod",
+            "offset": 36,
+            "address": 40184,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "W_MAX_PCT",
+              "1": "VAR_MAX_PCT",
+              "2": "VAR_AVAIL_PCT",
+              "3": "VA_MAX_PCT",
+              "4": "VARS"
+            }
+          },
+          {
+            "name": "VarSetPri",
+            "offset": 37,
+            "address": 40185,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "ACTIVE",
+              "1": "REACTIVE",
+              "2": "VENDOR"
+            }
+          },
+          {
+            "name": "VarSet",
+            "offset": 38,
+            "address": 40186,
+            "size": 2,
+            "type": "int32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 2147483648,
+            "scale_factor_ref": "VarSet_SF"
+          },
+          {
+            "name": "VarSetRvrt",
+            "offset": 40,
+            "address": 40188,
+            "size": 2,
+            "type": "int32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 2147483648,
+            "scale_factor_ref": "VarSet_SF"
+          },
+          {
+            "name": "VarSetPct",
+            "offset": 42,
+            "address": 40190,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VarSetPct_SF"
+          },
+          {
+            "name": "VarSetPctRvrt",
+            "offset": 43,
+            "address": 40191,
+            "size": 1,
+            "type": "int16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VarSetPct_SF"
+          },
+          {
+            "name": "VarSetEnaRvrt",
+            "offset": 44,
+            "address": 40192,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "VarSetRvrtTms",
+            "offset": 45,
+            "address": 40193,
+            "size": 2,
+            "type": "uint32",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "VarSetRvrtRem",
+            "offset": 47,
+            "address": 40195,
+            "size": 2,
+            "type": "uint32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295
+          },
+          {
+            "name": "WRmp",
+            "offset": 49,
+            "address": 40197,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "comments": [
+              "Ramp Rate"
+            ]
+          },
+          {
+            "name": "WRmpRef",
+            "offset": 50,
+            "address": 40198,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "A_MAX",
+              "1": "W_MAX"
+            }
+          },
+          {
+            "name": "VarRmp",
+            "offset": 51,
+            "address": 40199,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "AntiIslEna",
+            "offset": 52,
+            "address": 40200,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "DISABLED",
+              "1": "ENABLED"
+            }
+          },
+          {
+            "name": "PF_SF",
+            "offset": 53,
+            "address": 40201,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -3,
+            "comments": [
+              "Scale Factors"
+            ]
+          },
+          {
+            "name": "WMaxLimPct_SF",
+            "offset": 54,
+            "address": 40202,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "WSet_SF",
+            "offset": 55,
+            "address": 40203,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "WSetPct_SF",
+            "offset": 56,
+            "address": 40204,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "VarSet_SF",
+            "offset": 57,
+            "address": 40205,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "VarSetPct_SF",
+            "offset": 58,
+            "address": 40206,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "PF",
+            "offset": 59,
+            "address": 40207,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "Ext",
+            "offset": 60,
+            "address": 40208,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "OVER_EXCITED",
+              "1": "UNDER_EXCITED"
+            }
+          },
+          {
+            "name": "PF",
+            "offset": 61,
+            "address": 40209,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "Ext",
+            "offset": 62,
+            "address": 40210,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "OVER_EXCITED",
+              "1": "UNDER_EXCITED"
+            }
+          },
+          {
+            "name": "PF",
+            "offset": 63,
+            "address": 40211,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "Ext",
+            "offset": 64,
+            "address": 40212,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "OVER_EXCITED",
+              "1": "UNDER_EXCITED"
+            }
+          },
+          {
+            "name": "PF",
+            "offset": 65,
+            "address": 40213,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "Ext",
+            "offset": 66,
+            "address": 40214,
+            "size": 1,
+            "type": "enum16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535,
+            "symbols": {
+              "0": "OVER_EXCITED",
+              "1": "UNDER_EXCITED"
+            }
+          }
+        ]
+      }
+    ],
+    "meter": [
+      {
+        "id": 1,
+        "start_address": 40002,
+        "declared_length_L": 66,
+        "total_registers": 68,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40002,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 1
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40003,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 66
+          },
+          {
+            "name": "Mn",
+            "offset": 2,
+            "address": 40004,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "Md",
+            "offset": 18,
+            "address": 40020,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "Opt",
+            "offset": 34,
+            "address": 40036,
+            "size": 8,
+            "type": "string",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          },
+          {
+            "name": "Vr",
+            "offset": 42,
+            "address": 40044,
+            "size": 8,
+            "type": "string",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          },
+          {
+            "name": "SN",
+            "offset": 50,
+            "address": 40052,
+            "size": 16,
+            "type": "string",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 0
+          },
+          {
+            "name": "DA",
+            "offset": 66,
+            "address": 40068,
+            "size": 1,
+            "type": "uint16",
+            "access": "RW",
+            "mandatory": false,
+            "sentinel": 65535
+          },
+          {
+            "name": "Pad",
+            "offset": 67,
+            "address": 40069,
+            "size": 1,
+            "type": "pad",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 0
+          }
+        ]
+      },
+      {
+        "id": 203,
+        "start_address": 40070,
+        "declared_length_L": 105,
+        "total_registers": 107,
+        "points": [
+          {
+            "name": "ID",
+            "offset": 0,
+            "address": 40070,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 203
+          },
+          {
+            "name": "L",
+            "offset": 1,
+            "address": 40071,
+            "size": 1,
+            "type": "uint16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 65535,
+            "fixed_value": 105
+          },
+          {
+            "name": "A",
+            "offset": 2,
+            "address": 40072,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphA",
+            "offset": 3,
+            "address": 40073,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphB",
+            "offset": 4,
+            "address": 40074,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "AphC",
+            "offset": 5,
+            "address": 40075,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "A_SF"
+          },
+          {
+            "name": "A_SF",
+            "offset": 6,
+            "address": 40076,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "PhV",
+            "offset": 7,
+            "address": 40077,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphA",
+            "offset": 8,
+            "address": 40078,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphB",
+            "offset": 9,
+            "address": 40079,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphC",
+            "offset": 10,
+            "address": 40080,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PPV",
+            "offset": 11,
+            "address": 40081,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphAB",
+            "offset": 12,
+            "address": 40082,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphBC",
+            "offset": 13,
+            "address": 40083,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "PhVphCA",
+            "offset": 14,
+            "address": 40084,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "V_SF"
+          },
+          {
+            "name": "V_SF",
+            "offset": 15,
+            "address": 40085,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "Hz",
+            "offset": 16,
+            "address": 40086,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "Hz_SF"
+          },
+          {
+            "name": "Hz_SF",
+            "offset": 17,
+            "address": 40087,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -2
+          },
+          {
+            "name": "W",
+            "offset": 18,
+            "address": 40088,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "scale_factor_ref": "W_SF"
+          },
+          {
+            "name": "WphA",
+            "offset": 19,
+            "address": 40089,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "W_SF"
+          },
+          {
+            "name": "WphB",
+            "offset": 20,
+            "address": 40090,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "W_SF"
+          },
+          {
+            "name": "WphC",
+            "offset": 21,
+            "address": 40091,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "W_SF"
+          },
+          {
+            "name": "W_SF",
+            "offset": 22,
+            "address": 40092,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 2
+          },
+          {
+            "name": "VA",
+            "offset": 23,
+            "address": 40093,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VA_SF"
+          },
+          {
+            "name": "VAphA",
+            "offset": 24,
+            "address": 40094,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VA_SF"
+          },
+          {
+            "name": "VAphB",
+            "offset": 25,
+            "address": 40095,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VA_SF"
+          },
+          {
+            "name": "VAphC",
+            "offset": 26,
+            "address": 40096,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VA_SF"
+          },
+          {
+            "name": "VA_SF",
+            "offset": 27,
+            "address": 40097,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "VAR",
+            "offset": 28,
+            "address": 40098,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VAR_SF"
+          },
+          {
+            "name": "VARphA",
+            "offset": 29,
+            "address": 40099,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VAR_SF"
+          },
+          {
+            "name": "VARphB",
+            "offset": 30,
+            "address": 40100,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VAR_SF"
+          },
+          {
+            "name": "VARphC",
+            "offset": 31,
+            "address": 40101,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "VAR_SF"
+          },
+          {
+            "name": "VAR_SF",
+            "offset": 32,
+            "address": 40102,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "PF",
+            "offset": 33,
+            "address": 40103,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "PFphA",
+            "offset": 34,
+            "address": 40104,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "PFphB",
+            "offset": 35,
+            "address": 40105,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "PFphC",
+            "offset": 36,
+            "address": 40106,
+            "size": 1,
+            "type": "int16",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "scale_factor_ref": "PF_SF"
+          },
+          {
+            "name": "PF_SF",
+            "offset": 37,
+            "address": 40107,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": -3
+          },
+          {
+            "name": "TotWhExp",
+            "offset": 38,
+            "address": 40108,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhExpPhA",
+            "offset": 40,
+            "address": 40110,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhExpPhB",
+            "offset": 42,
+            "address": 40112,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhExpPhC",
+            "offset": 44,
+            "address": 40114,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhImp",
+            "offset": 46,
+            "address": 40116,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhImpPhA",
+            "offset": 48,
+            "address": 40118,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhImpPhB",
+            "offset": 50,
+            "address": 40120,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWhImpPhC",
+            "offset": 52,
+            "address": 40122,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotWh_SF"
+          },
+          {
+            "name": "TotWh_SF",
+            "offset": 54,
+            "address": 40124,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "TotVAhExp",
+            "offset": 55,
+            "address": 40125,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhExpPhA",
+            "offset": 57,
+            "address": 40127,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhExpPhB",
+            "offset": 59,
+            "address": 40129,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhExpPhC",
+            "offset": 61,
+            "address": 40131,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhImp",
+            "offset": 63,
+            "address": 40133,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhImpPhA",
+            "offset": 65,
+            "address": 40135,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhImpPhB",
+            "offset": 67,
+            "address": 40137,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAhImpPhC",
+            "offset": 69,
+            "address": 40139,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVAh_SF"
+          },
+          {
+            "name": "TotVAh_SF",
+            "offset": 71,
+            "address": 40141,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "TotVArhImpQ1",
+            "offset": 72,
+            "address": 40142,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ1PhA",
+            "offset": 74,
+            "address": 40144,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ1PhB",
+            "offset": 76,
+            "address": 40146,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ1PhC",
+            "offset": 78,
+            "address": 40148,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ2",
+            "offset": 80,
+            "address": 40150,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ2PhA",
+            "offset": 82,
+            "address": 40152,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ2PhB",
+            "offset": 84,
+            "address": 40154,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhImpQ2PhC",
+            "offset": 86,
+            "address": 40156,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ3",
+            "offset": 88,
+            "address": 40158,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ3PhA",
+            "offset": 90,
+            "address": 40160,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ3PhB",
+            "offset": 92,
+            "address": 40162,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ3PhC",
+            "offset": 94,
+            "address": 40164,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ4",
+            "offset": 96,
+            "address": 40166,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ4PhA",
+            "offset": 98,
+            "address": 40168,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ4PhB",
+            "offset": 100,
+            "address": 40170,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArhExpQ4PhC",
+            "offset": 102,
+            "address": 40172,
+            "size": 2,
+            "type": "acc32",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 4294967295,
+            "scale_factor_ref": "TotVArh_SF"
+          },
+          {
+            "name": "TotVArh_SF",
+            "offset": 104,
+            "address": 40174,
+            "size": 1,
+            "type": "sunssf",
+            "access": "R",
+            "mandatory": false,
+            "sentinel": 32768,
+            "fixed_value": 0
+          },
+          {
+            "name": "Evt",
+            "offset": 105,
+            "address": 40175,
+            "size": 2,
+            "type": "bitfield32",
+            "access": "R",
+            "mandatory": true,
+            "sentinel": 4294967295,
+            "symbols": {
+              "2": "M_EVENT_Power_Failure",
+              "3": "M_EVENT_Under_Voltage",
+              "4": "M_EVENT_Low_PF",
+              "5": "M_EVENT_Over_Current",
+              "6": "M_EVENT_Over_Voltage",
+              "7": "M_EVENT_Missing_Sensor",
+              "8": "M_EVENT_Reserved1",
+              "9": "M_EVENT_Reserved2",
+              "10": "M_EVENT_Reserved3",
+              "11": "M_EVENT_Reserved4",
+              "12": "M_EVENT_Reserved5",
+              "13": "M_EVENT_Reserved6",
+              "14": "M_EVENT_Reserved7",
+              "15": "M_EVENT_Reserved8",
+              "16": "M_EVENT_OEM01",
+              "17": "M_EVENT_OEM02",
+              "18": "M_EVENT_OEM03",
+              "19": "M_EVENT_OEM04",
+              "20": "M_EVENT_OEM05",
+              "21": "M_EVENT_OEM06",
+              "22": "M_EVENT_OEM07",
+              "23": "M_EVENT_OEM08",
+              "24": "M_EVENT_OEM09",
+              "25": "M_EVENT_OEM10",
+              "26": "M_EVENT_OEM11",
+              "27": "M_EVENT_OEM12",
+              "28": "M_EVENT_OEM13",
+              "29": "M_EVENT_OEM14",
+              "30": "M_EVENT_OEM15"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "sentinels": {
+    "uint16": "0xFFFF",
+    "enum16": "0xFFFF",
+    "bitfield16": "0xFFFF",
+    "int16": "0x8000",
+    "sunssf": "0x8000",
+    "uint32": "0xFFFFFFFF",
+    "acc32": "0xFFFFFFFF",
+    "bitfield32": "0xFFFFFFFF",
+    "int32": "0x80000000",
+    "acc64": "0xFFFFFFFFFFFFFFFF",
+    "string": "0x0",
+    "pad": "0x0"
+  },
+  "common_block": {
+    "Mn": "Voltix",
+    "Vr": "1.0.0",
+    "DA": 0,
+    "inverter": {
+      "Md": "VoltixSim-Inverter",
+      "SN": "VTX-SIM-INV-001",
+      "Opt": ""
+    },
+    "meter": {
+      "Md": "VoltixSim-Meter",
+      "SN": "VTX-SIM-MET-001",
+      "Opt": ""
+    }
+  },
+  "scale_factors": {
+    "1": {},
+    "103": {
+      "A_SF": 0,
+      "V_SF": 0,
+      "W_SF": 2,
+      "Hz_SF": -2,
+      "VA_SF": 0,
+      "VAr_SF": 0,
+      "PF_SF": -3,
+      "WH_SF": 0,
+      "DCA_SF": 0,
+      "DCV_SF": 0,
+      "DCW_SF": 0,
+      "Tmp_SF": 0
+    },
+    "124": {
+      "WChaMax_SF": 1,
+      "WChaDisChaGra_SF": 0,
+      "VAChaMax_SF": 0,
+      "MinRsvPct_SF": 0,
+      "ChaState_SF": -2,
+      "StorAval_SF": 0,
+      "InBatV_SF": -1,
+      "InOutWRte_SF": 0
+    },
+    "203": {
+      "A_SF": 0,
+      "V_SF": 0,
+      "Hz_SF": -2,
+      "W_SF": 2,
+      "VA_SF": 0,
+      "VAR_SF": 0,
+      "PF_SF": -3,
+      "TotWh_SF": 0,
+      "TotVAh_SF": 0,
+      "TotVArh_SF": 0
+    },
+    "704": {
+      "PF_SF": -3,
+      "WMaxLimPct_SF": -2,
+      "WSet_SF": 0,
+      "WSetPct_SF": -2,
+      "VarSet_SF": 0,
+      "VarSetPct_SF": -2
+    }
+  },
+  "domain_conventions": {
+    "battery_power_kw": "positive = discharging, negative = charging",
+    "site_power_kw": "positive = exporting to grid (simulator-defined meter convention; the adapter normalises at its boundary)",
+    "soc_pct": "ChaState x 10^-2 with ChaState_SF=-2"
+  },
+  "control_write": {
+    "description": "One atomic FC16 request covering WSetEna..WSet (4 registers) sets enable, mode and target together.",
+    "function": 16,
+    "start_address": 40170,
+    "registers": [
+      "WSetEna",
+      "WSetMod",
+      "WSet.hi",
+      "WSet.lo"
+    ],
+    "values": {
+      "WSetEna": "ENABLED(1)",
+      "WSetMod": "WATTS(1)",
+      "WSet": "signed int32 watts, WSet_SF=0"
+    },
+    "readback": "read WSetEna/WSetMod/WSet after write to confirm",
+    "watchdog": "only an accepted complete write of this window refreshes the simulator's 10 s power-command deadline"
+  },
+  "disallowed": [
+    "writes to read-only points -> Modbus exception 02",
+    "partial write of the WSet window (WSet without Ena/Mod) -> rejected, no watchdog refresh",
+    "points marked unsupported in this profile serve the type sentinel"
+  ]
+}

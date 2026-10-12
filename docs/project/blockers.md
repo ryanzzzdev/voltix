@@ -9,13 +9,13 @@ No obstacle blocks beginning bootstrap or protocol investigation. These are expl
 ## BLK-001 — Exact simulator protocol profile
 
 - Identified: 2026-10-12
-- Status: Open
+- Status: Resolved
 - Affected tasks: [VTX-004](backlog.md#vtx-004), VTX-005, VTX-006; M1 interoperability acceptance.
 - Impact: Selected SunSpec models still need an immutable revision, exact register manifest, mandatory-value treatment, enable/write sequence and independently checked fixtures.
 - Blocking scope: Gates adapter/simulator implementation that relies on exact wire fields; does not block bootstrap or protocol research.
-- Evidence: Official model definitions were inspected during planning to distinguish SoC in 124, watt targets in 704, and the 203 meter. A verified full manifest and library round-trip do not exist yet. See [device contract](features/device-profile.md).
+- Evidence: Official model definitions were inspected during planning to distinguish SoC in 124, watt targets in 704, and the 203 meter. See [device contract](features/device-profile.md).
 - Next action / owner: Implementing agent completes VTX-004, documenting source revision and narrowing unsupported behaviour if needed.
-- Resolution: Pending protocol evidence.
+- Resolution: Resolved 2026-10-12. Vendored `sunspec/models@90b4a33` (Apache-2.0) and generated `contracts/sunspec-profile.json` plus 17 golden fixtures via `contracts/generate_profile.py`, derived from upstream definitions before either implementation exists. Atomic power command = one FC16 over the 4-register WSetEna..WSet window; meter sign convention declared sim policy.
 
 <a id="blk-002"></a>
 

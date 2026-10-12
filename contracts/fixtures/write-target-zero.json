@@ -1,0 +1,11 @@
+{
+  "name": "write-target-zero",
+  "description": "Atomic FC16 write commanding 0 W (fallback target).",
+  "unit_id": 1,
+  "request_pdu_hex": "10 9CEA 0004 08 0001 0001 0000 0000",
+  "expected_response_pdu_hex": "10 9CEA 0004",
+  "decode": {
+    "WSet": 0,
+    "kw": 0.0
+  }
+}

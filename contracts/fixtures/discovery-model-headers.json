@@ -1,0 +1,12 @@
+{
+  "name": "discovery-model-headers",
+  "description": "Walk model ID/length headers on the inverter endpoint.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C42 0002",
+  "expected_response_pdu_hex": "03 04 0001 0042",
+  "decode": {
+    "ID": 1,
+    "L": 66,
+    "next_header": "103 at 40070; then 124 at 40122; 704 at 40148; end marker 0xFFFF at 40215"
+  }
+}

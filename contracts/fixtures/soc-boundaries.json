@@ -1,0 +1,13 @@
+{
+  "name": "soc-boundaries",
+  "description": "Operating limits: raw 500 -> 5.00 % (discharge floor) and raw 9500 -> 95.00 % (charge ceiling).",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9CC2 0001",
+  "expected_response_pdu_hex": "03 02 01F4",
+  "decode": {
+    "ChaState_raw": 500,
+    "ChaState_SF": -2,
+    "soc_pct": 5.0
+  },
+  "notes": "Second case identical with response register 9500 -> 95.0 %."
+}

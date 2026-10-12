@@ -1,0 +1,11 @@
+{
+  "name": "sentinel-chastate",
+  "description": "ChaState returns uint16 sentinel 0xFFFF = not implemented.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9CC2 0001",
+  "expected_response_pdu_hex": "03 02 FFFF",
+  "decode": {
+    "ChaState_raw": "0xFFFF",
+    "decode": "INVALID"
+  }
+}

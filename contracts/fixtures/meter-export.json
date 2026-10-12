@@ -1,0 +1,13 @@
+{
+  "name": "meter-export",
+  "description": "Site meter W int16 raw 1800, W_SF=2 -> +180.0 kW export.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9C98 0002",
+  "expected_response_pdu_hex": "03 04 0708 0002",
+  "decode": {
+    "W_raw": 1800,
+    "W_SF": 2,
+    "watts": 180000,
+    "kw": 180.0
+  }
+}

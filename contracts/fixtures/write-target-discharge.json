@@ -1,0 +1,14 @@
+{
+  "name": "write-target-discharge",
+  "description": "Atomic FC16 write of the WSet window: enable + watts mode + int32 target +250000 W = 0x0003D090.",
+  "unit_id": 1,
+  "request_pdu_hex": "10 9CEA 0004 08 0001 0001 0003 D090",
+  "expected_response_pdu_hex": "10 9CEA 0004",
+  "decode": {
+    "WSetEna": "ENABLED(1)",
+    "WSetMod": "WATTS(1)",
+    "WSet": 250000,
+    "kw": 250.0
+  },
+  "notes": "This is the only write pattern that refreshes the 10 s watchdog."
+}

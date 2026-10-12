@@ -1,0 +1,13 @@
+{
+  "name": "soc-normal",
+  "description": "ChaState uint16 raw 5000 with ChaState_SF=-2 -> 50.00 %.",
+  "unit_id": 1,
+  "request_pdu_hex": "03 9CC2 0001",
+  "expected_response_pdu_hex": "03 02 1388",
+  "decode": {
+    "ChaState_raw": 5000,
+    "ChaState_SF": -2,
+    "soc_pct": 50.0
+  },
+  "notes": "ChaState_SF is read separately at its own address (fixed -2)."
+}
