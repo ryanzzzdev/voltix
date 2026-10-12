@@ -12,6 +12,7 @@ Voltix is a planned Linux edge controller and telemetry gateway for simulated ba
 - Behavioural contracts: [device profile](docs/project/features/device-profile.md), [control](docs/project/features/control.md), [telemetry](docs/project/features/telemetry.md), [verification](docs/project/features/verification.md)
 - [Decision records](docs/project/decisions/)
 - [Work journal](docs/project/journal/)
+- [Agent tooling notes](docs/project/agent-tooling-notes.md) — known file-tool failure modes and mitigations
 - [Initial discussions](docs/initial-discussion/) — background proposals, not the canonical implementation specification
 
 ## Development setup
