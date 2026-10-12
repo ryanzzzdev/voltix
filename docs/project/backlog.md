@@ -16,7 +16,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
-- 📋 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
+- ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - 📋 [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - 📋 [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - 📋 [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
@@ -355,7 +355,7 @@ Simplification recorded: `MeasuredAt` is the cycle read-start time, so "input ag
 - Area: integration
 - Milestone: M2
 - Priority: High
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-010](#vtx-010)
 - References: [control](features/control.md), [verification](features/verification.md)
 
@@ -372,11 +372,11 @@ Prove the M2 behaviour against real simulator and dispatch processes.
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/control/e2e_test.go` (build tag `integration`, `make integration`) runs the real `bin/voltix` against the real simulator and covers every required scenario in a single 26 s pass: standby, discharge/charge ramping at ≤50 kW/s to target, expiry fallback with fallback-start vs time-to-zero measured separately, SoC floor inhibit, infeasible baseline reported as `SITE_LIMIT_INFEASIBLE`, device fault inhibit+clear, offline/stale degradation, old-session replay rejection after restart with fresh-session rev-1 acceptance, 400/401 paths, delayed-write `Acknowledged=null` uncertainty and recovery, SIGSTOP-induced gap invalidation, and no recovery jump to an old target. Findings recorded in `evidence/control/findings.md` with the M2 exit review — all five exit criteria met. `go vet` clean; unit+races green (policy 11, dispatch 10, control 9).
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-012"></a>
 
@@ -407,7 +407,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-013"></a>
 
@@ -438,7 +438,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-014"></a>
 
@@ -469,7 +469,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-015"></a>
 
@@ -500,7 +500,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-016"></a>
 
@@ -531,7 +531,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-017"></a>
 
@@ -562,7 +562,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-018"></a>
 
@@ -593,7 +593,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-019"></a>
 
@@ -624,7 +624,7 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
 
 <a id="vtx-020"></a>
 
@@ -655,4 +655,4 @@ Not started; no implementation or verification claimed.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.

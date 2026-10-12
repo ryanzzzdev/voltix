@@ -1,7 +1,7 @@
 # Voltix roadmap
 
 Updated: 2026-10-12
-Status: M1 complete — simulator, frozen wire profile and bounded Go adapter verified end to end ([findings](../evidence/device-integration/findings.md)).
+Status: M2 complete — authenticated dispatch, pure policy, single-owner 1 Hz loop and boundary/recovery behaviour verified end to end ([findings](../evidence/control/findings.md)). M1 evidence: [device integration](../evidence/device-integration/findings.md).
 
 Build a reproducible, simulated battery-site controller that demonstrates device integration, explicit operating policies, and failure recovery. This is an engineering portfolio, not a certified controller or a Tesla-compatible product. Scope and rationale: [decision 002](decisions/002-scope-and-delivery.md).
 
@@ -12,7 +12,7 @@ Build a reproducible, simulated battery-site controller that demonstrates device
 | Documentation setup | Canonical project-management workflow | Complete | None |
 | Planning baseline | Scope, architecture, contracts, initial tasks | Complete | Documentation setup |
 | M1 — Device integration | Reproducible simulator and Go device adapter | Complete | Planning baseline |
-| M2 — Supervisory control | Validated dispatch, limits, expiry and recovery | Planned | M1 |
+| M2 — Supervisory control | Validated dispatch, limits, expiry and recovery | Complete | M1 |
 | M3 — Durable telemetry | Bounded persistent queue and deduplicated replay | Planned | M2 for integrated acceptance; queue work may overlap M2 |
 | M4 — Linux demo and verification | Reproducible container demo, native service checks, failure evidence | Planned | M1–M3 |
 

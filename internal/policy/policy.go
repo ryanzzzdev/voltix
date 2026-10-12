@@ -4,6 +4,7 @@
 package policy
 
 import (
+	"encoding/json"
 	"math"
 	"time"
 )
@@ -20,6 +21,10 @@ const (
 
 func (s State) String() string {
 	return [...]string{"STANDBY", "ACTIVE", "DEGRADED", "FAULT"}[s]
+}
+
+func (s State) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
 }
 
 // Reason codes recorded alongside a decision.

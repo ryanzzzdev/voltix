@@ -22,7 +22,7 @@ sim-test:
 	cd sim && $(UV) run pytest -q
 
 integration:
-	$(GO) test -tags=integration -v ./internal/device/
+	$(GO) test -tags=integration -v ./internal/device/ ./internal/control/
 
 clean:
 	rm -rf bin
