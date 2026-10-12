@@ -12,6 +12,9 @@ type Server struct {
 	session *Session
 	token   string
 	mux     *http.ServeMux
+	// StatusExtra, when set, is merged into GET /api/status as "loop".
+	// It must return nil or an exported JSON-marshalable value.
+	StatusExtra func() any
 }
 
 func NewServer(sess *Session, token string) *Server {
@@ -77,6 +80,9 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		body["requested_target"] = cmd.TargetKW
 		body["revision"] = cmd.Revision
 		body["command_id"] = cmd.CommandID
+	}
+	if s.StatusExtra != nil {
+		body["loop"] = s.StatusExtra()
 	}
 	respond(w, http.StatusOK, body)
 }

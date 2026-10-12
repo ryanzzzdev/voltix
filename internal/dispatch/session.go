@@ -77,6 +77,10 @@ func NewSession(controllerID string, clock Clock) *Session {
 
 func (s *Session) BootSessionID() string { return s.bootID }
 
+// Mono reports the session clock's monotonic reading, letting callers map
+// a command's DeadlineMono onto their own cycle time.
+func (s *Session) Mono() time.Duration { return s.clock.Mono() }
+
 // Active returns the current intent and its monotonic deadline; ok=false
 // when nothing is active or it has expired. Expiry is checked on BOTH the
 // monotonic deadline and the wall valid_until, so a forward wall-clock

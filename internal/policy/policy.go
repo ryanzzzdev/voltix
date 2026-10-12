@@ -180,9 +180,14 @@ func (s *Supervisor) interval(in Inputs, d *Decision) (lo, hi int64) {
 		d.Reasons = append(d.Reasons, ReasonSoCCeil)
 	}
 	baseline := in.MeterW - in.InverterW // uncontrollable site net export
-	if lim := s.cfg.ExportLimitW - baseline; lim < hi {
-		hi = lim
+	lim := s.cfg.ExportLimitW - baseline
+	// Flag only when the bound actually clamps the achievable interval
+	// below what the request could otherwise reach.
+	if lim < hi && in.Intent != nil && in.Intent.TargetW > lim {
 		d.Reasons = append(d.Reasons, ReasonExportLimit)
+	}
+	if lim < hi {
+		hi = lim
 	}
 	return lo, hi
 }

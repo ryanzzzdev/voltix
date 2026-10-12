@@ -15,7 +15,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-007 — Verify the complete device integration slice](#vtx-007)
 - ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
-- 📋 [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
+- ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - 📋 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - 📋 [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - 📋 [VTX-013 — Implement the transactional upstream mock](#vtx-013)
@@ -324,7 +324,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: controller
 - Milestone: M2
 - Priority: High
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-008](#vtx-008), [VTX-009](#vtx-009)
 - References: [architecture](architecture.md), [control](features/control.md)
 
@@ -341,11 +341,11 @@ Wire the controller to real adapters while keeping one owner for state and devic
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/control` implements the single-owner 1 Hz loop: concurrent inverter/meter reads (per-cycle goroutines bounded by endpoint deadlines) feed `policy.Step`; writes are serialised through the one loop goroutine and issued fresh each cycle — a failed write sets `Acknowledged=nil` (uncertain) and is never replayed. `Decision.Invalidate` drops the dispatch intent (stale/invalid reads, >2.5 s gaps, lease expiry — the latter mapped from the session's monotonic deadline onto cycle `Now`). `Snapshot` carries state, reasons, requested/constrained/acknowledged/measured watts, read+write phase durations (input age == read latency), and publishes via a bounded nonblocking channel — a stopped consumer costs snapshots, never loop time. `Run` shuts down on ctx cancel with one bounded zero write. `cmd/voltix` now wires the real adapters: YAML config (yaml.v3), SunSpec model-chain identity validation at startup, bearer token from `VOLTIX_DISPATCH_TOKEN` only, loopback dispatch listener, and the loop snapshot merged into `GET /api/status` as `loop`. Verified 2026-10-12: 9 control tests pass (active/standby/degraded/fault paths, uncertain-write, slow-consumer non-stall, gap invalidation, lease expiry, bounded shutdown); `go test -race ./...` clean; `go vet` clean.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Simplification recorded: `MeasuredAt` is the cycle read-start time, so "input age" equals read latency this cycle — per-endpoint ages were judged redundant given both reads share one deadline. `Acknowledged` is only set after the device accepts the write; it does not prove the inverter tracked it — honest uncertainty, per contract.
 
 <a id="vtx-011"></a>
 
