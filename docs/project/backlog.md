@@ -13,7 +13,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - ✅ [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
 - ✅ [VTX-007 — Verify the complete device integration slice](#vtx-007)
-- 🟢 [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
+- ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - 🟢 [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - 📋 [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
 - 📋 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
@@ -262,7 +262,7 @@ The test found one real test-authoring bug during development: the watchdog dead
 - Area: controller
 - Milestone: M2
 - Priority: High
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-007](#vtx-007)
 - References: [control](features/control.md)
 
@@ -279,11 +279,11 @@ Implement deterministic policy calculation isolated from sockets, HTTP and stora
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`internal/policy` implements `Supervisor.Step` as a pure function over injected `Inputs` (readings + validity flags + monotonic `Now`/`MeasuredAt`/`Intent.ExpiresAt`), returning `Decision{State, TargetW, Invalidate, Reasons}`. The ACTIVE path forms the hard interval (charge/discharge limits, exact 5%/95% SoC edges, export bound via `baseline = meter − inverter`), clamps the intent, applies ≤1 s slew (measured baseline on first/recovery cycles), then re-applies hard bounds — matching the contract's precedence. Gaps >2.5 s invalidate intent without multiplying the stale elapsed time; fault/stale/invalid/expired inputs yield DEGRADED/FAULT with ramp-to-zero. Verified 2026-10-12: 11 tests pass covering all boundary cases in the Done-when list; `go vet` clean; the package imports only `math`/`time`.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Deliberate simplification for testability: snapshot freshness is a single `MeasuredAt` rather than per-endpoint ages; VTX-010 wires it from both read results.
 
 <a id="vtx-009"></a>
 
