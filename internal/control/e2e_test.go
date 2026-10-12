@@ -15,12 +15,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 )
 
 const ctlToken = "e2e-token-0123456789abcdef"
+const telToken = "e2e-tel-token-0123456789abcde"
 const ctlID = "voltix-e2e"
 
 // ---- sim control socket ---------------------------------------------------
@@ -115,9 +117,8 @@ func buildVoltix(t *testing.T) string {
 	return bin
 }
 
-func startVoltix(t *testing.T, bin string, invPort, metPort, apiPort int) *voltixProc {
-	t.Helper()
-	cfg := fmt.Sprintf(`controller_id: %s
+func voltixConfig(invPort, metPort, apiPort int, extra string) string {
+	return fmt.Sprintf(`controller_id: %s
 devices:
   inverter: {host: 127.0.0.1, port: %d}
   meter: {host: 127.0.0.1, port: %d}
@@ -135,17 +136,25 @@ timing:
   max_loop_gap_s: 2.5
 upstream:
   dispatch_listen: 127.0.0.1:%d
-`, ctlID, invPort, metPort, apiPort)
+%s`, ctlID, invPort, metPort, apiPort, extra)
+}
+
+func startVoltixCfg(t *testing.T, bin string, cfg string) *voltixProc {
+	t.Helper()
 	cfgPath := filepath.Join(t.TempDir(), "voltix.yaml")
 	if err := os.WriteFile(cfgPath, []byte(cfg), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	apiPortStr := strings.Split(cfg, "dispatch_listen: 127.0.0.1:")[1]
+	apiPortStr = strings.Split(apiPortStr, "\n")[0]
 	cmd := exec.Command(bin, "-config", cfgPath)
-	cmd.Env = append(os.Environ(), "VOLTIX_DISPATCH_TOKEN="+ctlToken)
+	cmd.Env = append(os.Environ(),
+		"VOLTIX_DISPATCH_TOKEN="+ctlToken,
+		"VOLTIX_TELEMETRY_TOKEN="+telToken)
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start voltix: %v", err)
 	}
-	p := &voltixProc{cmd: cmd, apiURL: fmt.Sprintf("http://127.0.0.1:%d", apiPort)}
+	p := &voltixProc{cmd: cmd, apiURL: "http://127.0.0.1:" + apiPortStr}
 	t.Cleanup(func() { cmd.Process.Kill(); cmd.Wait() })
 
 	// Wait for the API and read the boot session id.
@@ -166,6 +175,15 @@ upstream:
 		t.Fatal("empty boot_session_id")
 	}
 	return p
+}
+
+// startVoltix keeps the original signature: telemetry enabled with a
+// per-test state dir and no reachable upstream (uploads fail harmlessly).
+func startVoltix(t *testing.T, bin string, invPort, metPort, apiPort int) *voltixProc {
+	t.Helper()
+	dir := t.TempDir()
+	extra := "telemetry:\n  state_dir: " + dir + "\n"
+	return startVoltixCfg(t, bin, voltixConfig(invPort, metPort, apiPort, extra))
 }
 
 func api(t *testing.T, method, url string, body []byte) (int, map[string]any) {

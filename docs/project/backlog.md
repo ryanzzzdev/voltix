@@ -20,7 +20,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
-- 📋 [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
+- ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - 📋 [VTX-016 — Package the isolated container demonstration](#vtx-016)
 - 📋 [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - 📋 [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
@@ -479,7 +479,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M3
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-011](#vtx-011), [VTX-014](#vtx-014)
 - References: [telemetry](features/telemetry.md), [verification](features/verification.md)
 
@@ -496,7 +496,7 @@ Connect the real queue to the controller and establish M3 acceptance evidence.
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`cmd/voltix` now runs the full telemetry path: `internal/telemetry.Producer` consumes loop snapshots into status events plus transition-only alarms (no storm); `store.RunWriter` drains bounded handoffs; `syncer.Uploader` uploads to `telemetry_url` behind `VOLTIX_TELEMETRY_TOKEN`; a 5 s probe restores storage health; `GET /api/status` exposes a `telemetry` block (healthy, stream_id, depths, ages, evictions, volatile losses, upload stats). Startup store-init failure is fatal; mid-run failure degrades health without touching control. `internal/control/telemetry_e2e_test.go` verifies end to end against real processes (~25 s): baseline drain, telemetry-only outage with dispatch valid + catch-up under continued collection, lost-ack replay deduped, SIGKILL crash/reopen with stable stream_id and resumed upload, small-cap overflow with persistent evictions + continued control, plus measured commit throughput (4151 ev/s), RSS (15.4 MB) and db+wal footprint (264 KB). `evidence/telemetry/findings.md` records the M3 exit review — all six criteria met with explicit ENOSPC/power-loss limitations. Verified 2026-10-12: full unit suite + `go test -race` + `make integration` green.
 
 ### Notes
 

@@ -50,7 +50,8 @@ type Config struct {
 	MaxStatus    int64 // persistent status tier bound (default 90000)
 	MaxAlarm     int64 // persistent alarm tier bound (default 10000)
 	MaxPayload   int   // encoded payload bound bytes (default 1024)
-	Handoff      int   // per-tier in-memory handoff slots (default 900/100)
+	Handoff      int   // status-tier handoff slots (default 900)
+	HandoffAlarm int   // alarm-tier handoff slots (default 100)
 }
 
 func (c Config) withDefaults() Config {
@@ -65,6 +66,9 @@ func (c Config) withDefaults() Config {
 	}
 	if c.Handoff <= 0 {
 		c.Handoff = 900
+	}
+	if c.HandoffAlarm <= 0 {
+		c.HandoffAlarm = 100
 	}
 	return c
 }
@@ -181,7 +185,7 @@ func (s *Store) init() error {
 func (s *Store) startHandoff() {
 	if s.handoffs[0] == nil {
 		s.handoffs[TierStatus] = make(chan queued, s.cfg.Handoff)
-		s.handoffs[TierAlarm] = make(chan queued, max(1, s.cfg.Handoff/9))
+		s.handoffs[TierAlarm] = make(chan queued, s.cfg.HandoffAlarm)
 	}
 }
 

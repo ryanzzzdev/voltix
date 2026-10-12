@@ -18,6 +18,9 @@ import (
 	"voltix/internal/device"
 	"voltix/internal/dispatch"
 	"voltix/internal/policy"
+	"voltix/internal/store"
+	"voltix/internal/syncer"
+	"voltix/internal/telemetry"
 )
 
 var version = "dev"
@@ -42,8 +45,17 @@ type config struct {
 		MaxInputAgeS   float64 `yaml:"max_input_age_s"`
 		MaxLoopGapS    float64 `yaml:"max_loop_gap_s"`
 	} `yaml:"timing"`
+	Telemetry struct {
+		StateDir        string `yaml:"state_dir"`
+		MaxStatusEvents int64  `yaml:"max_status_events"`
+		MaxAlarmEvents  int64  `yaml:"max_alarm_events"`
+		MaxPayloadBytes int    `yaml:"max_payload_bytes"`
+		HandoffStatus   int    `yaml:"handoff_status_slots"`
+		HandoffAlarm    int    `yaml:"handoff_alarm_slots"`
+	} `yaml:"telemetry"`
 	Upstream struct {
 		DispatchListen string `yaml:"dispatch_listen"`
+		TelemetryURL   string `yaml:"telemetry_url"`
 	} `yaml:"upstream"`
 }
 
@@ -101,6 +113,25 @@ func main() {
 	session := dispatch.NewSession(c.ControllerID, dispatch.RealClock())
 	srv := dispatch.NewServer(session, token)
 
+	// Durable telemetry: init failure is fatal (contract); a mid-run
+	// failure degrades store health but never the control path.
+	st, err := store.Open(c.Telemetry.StateDir, store.Config{
+		ControllerID: c.ControllerID,
+		MaxStatus:    c.Telemetry.MaxStatusEvents,
+		MaxAlarm:     c.Telemetry.MaxAlarmEvents,
+		MaxPayload:   c.Telemetry.MaxPayloadBytes,
+		Handoff:      c.Telemetry.HandoffStatus,
+		HandoffAlarm: c.Telemetry.HandoffAlarm,
+	})
+	if err != nil {
+		log.Fatalf("event store: %v", err)
+	}
+	defer st.Close()
+	telToken := os.Getenv("VOLTIX_TELEMETRY_TOKEN")
+	uploader := syncer.New(st, syncer.Config{
+		URL: c.Upstream.TelemetryURL, Token: telToken,
+	})
+
 	snaps := make(chan control.Snapshot, 8)
 	loop := control.New(control.LoopConfig{
 		Inverter:  inverter,
@@ -119,11 +150,32 @@ func main() {
 			MaxGap:          time.Duration(c.Timing.MaxLoopGapS * float64(time.Second)),
 		}),
 	})
-	srv.StatusExtra = func() any {
+	srv.StatusExtra = func() map[string]any {
+		var snap any
 		if s, ok := loop.Latest(); ok {
-			return s
+			snap = s
 		}
-		return nil
+		stStatus, stAlarm, oldest, _ := st.Depth(context.Background())
+		evicted, lost, _ := st.Counters(context.Background())
+		up := uploader.Stats()
+		return map[string]any{
+			"loop": snap,
+			"telemetry": map[string]any{
+				"healthy":        st.Healthy(),
+				"stream_id":      st.StreamID,
+				"depth_status":   stStatus,
+				"depth_alarm":    stAlarm,
+				"oldest_age_s":   oldest.Seconds(),
+				"evicted_status": evicted[0],
+				"evicted_alarm":  evicted[1],
+				"lost_status":    lost[0],
+				"lost_alarm":     lost[1],
+				"uploaded":       up.Uploaded,
+				"upload_failed":  up.Failed,
+				"upstream_fault": up.ConfigFault,
+				"upstream_error": up.LastError,
+			},
+		}
 	}
 
 	httpSrv := &http.Server{
@@ -136,19 +188,39 @@ func main() {
 		log.Fatalf("dispatch listen: %v", err)
 	}
 	go func() { _ = httpSrv.Serve(ln) }()
-	go func() {
-		// Drain the snapshot channel so a stuck consumer never exists.
-		for range snaps {
-		}
-	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(),
 		os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	writerCtx, stopWriter := context.WithCancel(context.Background())
+	go st.RunWriter(writerCtx)
+	go telemetry.NewProducer(st).Consume(snaps)
+	go uploader.Run(ctx)
+	go func() {
+		// Storage recovery probe: while unhealthy, one cheap write
+		// attempt per 5 s restores acceptance when storage recovers.
+		tk := time.NewTicker(5 * time.Second)
+		defer tk.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tk.C:
+				if !st.Healthy() {
+					if _, err := st.Insert(ctx, store.TierAlarm,
+						time.Now(), []byte(`{"kind":"probe"}`)); err == nil {
+						st.MarkHealthy()
+					}
+				}
+			}
+		}
+	}()
+
 	log.Printf("voltix %s: controller_id=%s boot_session=%s dispatch=%s",
 		version, c.ControllerID, session.BootSessionID(), httpSrv.Addr)
 	loop.Run(ctx) // returns after the bounded zero write on shutdown
+	stopWriter()  // drain remaining handoff events before store close
 
 	shutCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

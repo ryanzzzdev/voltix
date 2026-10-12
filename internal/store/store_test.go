@@ -213,3 +213,22 @@ func TestCheckpointIsBounded(t *testing.T) {
 		t.Fatalf("checkpoint: %v", err)
 	}
 }
+
+// Measurement for evidence/telemetry/findings.md — run:
+//
+//	go test ./internal/store/ -run TestMeasureCommitThroughput -v
+func TestMeasureCommitThroughput(t *testing.T) {
+	s := open(t, Config{ControllerID: "bench", MaxStatus: 1e9})
+	ctx := context.Background()
+	payload := make([]byte, 320) // representative snapshot size
+	const n = 2000
+	start := time.Now()
+	for i := 0; i < n; i++ {
+		if _, err := s.Insert(ctx, TierStatus, t0, payload); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := time.Since(start)
+	t.Logf("MEASURE: %d commits in %v = %.0f events/s (%.1f µs/commit) incl. seq alloc + cap check",
+		n, d, float64(n)/d.Seconds(), float64(d.Microseconds())/n)
+}
