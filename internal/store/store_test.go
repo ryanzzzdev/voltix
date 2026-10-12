@@ -3,8 +3,11 @@ package store
 import (
 	"context"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -231,4 +234,97 @@ func TestMeasureCommitThroughput(t *testing.T) {
 	d := time.Since(start)
 	t.Logf("MEASURE: %d commits in %v = %.0f events/s (%.1f µs/commit) incl. seq alloc + cap check",
 		n, d, float64(n)/d.Seconds(), float64(d.Microseconds())/n)
+}
+
+// Audit R4: the store's disk-full handling path under a REAL
+// kernel-enforced write failure. A genuine filesystem ENOSPC needs a
+// bounded mount (unavailable without privileges), so the harness re-execs
+// this test in a subprocess with RLIMIT_FSIZE and ignored SIGXFSZ: file
+// writes then fail with EFBIG — the same class of storage-write error the
+// commit path must handle. The test proves: the error is surfaced (not
+// lost), the store stops accepting writes, prior rows stay readable, and
+// raising the limit restores writes without corruption.
+func TestStorageWriteFailureSurfacedAndRecoverable(t *testing.T) {
+	if os.Getenv("VTX_FS_LIMIT") != "1" {
+		cmd := exec.Command(os.Args[0], "-test.run=^TestStorageWriteFailureSurfacedAndRecoverable$", "-test.v")
+		cmd.Env = append(os.Environ(), "VTX_FS_LIMIT=1")
+		out, err := cmd.CombinedOutput()
+		t.Logf("subprocess:\n%s", out)
+		if err != nil {
+			t.Fatalf("limited subprocess failed: %v", err)
+		}
+		return
+	}
+
+	signal.Ignore(syscall.SIGXFSZ)
+	var lim syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_FSIZE, &lim); err != nil {
+		t.Skipf("rlimit unavailable: %v", err)
+	}
+	lim.Cur = 64 * 1024
+	if err := syscall.Setrlimit(syscall.RLIMIT_FSIZE, &lim); err != nil {
+		t.Skipf("cannot set RLIMIT_FSIZE: %v", err)
+	}
+	dir, err := os.MkdirTemp("", "voltix-fslimit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	s, err := Open(dir, smallCfg())
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer s.Close()
+	ctx := context.Background()
+
+	seedSeq, err := s.Insert(ctx, TierStatus, t0, []byte(`{"seed":1}`))
+	if err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	// Write until the kernel refuses — must surface an error, never panic
+	// or silently succeed.
+	var failErr error
+	for i := 0; i < 100; i++ {
+		if _, err := s.Insert(ctx, TierStatus, t0, []byte(strings.Repeat("x", 900))); err != nil {
+			failErr = err
+			break
+		}
+	}
+	if failErr == nil {
+		t.Fatal("no storage-write failure observed under RLIMIT_FSIZE")
+	}
+	t.Logf("write failure surfaced: %v", failErr)
+
+	// The async commit path treats it the same way: unhealthy + counted.
+	s.MarkHealthy()
+	s.commit(queued{tier: TierStatus, at: t0, body: []byte(`{"v":1}`)})
+	if s.Healthy() {
+		t.Fatal("failed commit must mark store unhealthy")
+	}
+	if err := s.Offer(TierStatus, t0, []byte(`{"v":2}`)); err != ErrUnhealthy {
+		t.Fatalf("offer while unhealthy: %v", err)
+	}
+	_, vol, err := s.Counters(ctx)
+	if err != nil || vol[TierStatus] < 2 {
+		t.Fatalf("volatile drops not counted: %v %v", vol, err)
+	}
+
+	// Prior committed rows remain readable and intact.
+	evs, err := s.Batch(ctx, 5)
+	if err != nil || len(evs) < 1 || evs[0].SeqID != seedSeq {
+		t.Fatalf("reads degraded after write failure: %v %+v", err, evs)
+	}
+
+	// Raising the soft limit again restores writes — same on-disk file,
+	// no corruption, no reset.
+	lim.Cur = lim.Max
+	if err := syscall.Setrlimit(syscall.RLIMIT_FSIZE, &lim); err != nil {
+		t.Fatalf("raise limit: %v", err)
+	}
+	s.MarkHealthy()
+	if _, err := s.Insert(ctx, TierStatus, t0, []byte(`{"after":1}`)); err != nil {
+		t.Fatalf("insert after limit raised: %v", err)
+	}
 }

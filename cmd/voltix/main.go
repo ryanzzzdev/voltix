@@ -139,9 +139,9 @@ func main() {
 
 	snaps := make(chan control.Snapshot, 8)
 	loop := control.New(control.LoopConfig{
-		Inverter:  inverter,
-		Meter:     meter,
-		Session:   session,
+		Inverter:    inverter,
+		Meter:       meter,
+		Session:     session,
 		Snapshots:   snaps,
 		Period:      time.Duration(c.Timing.CyclePeriodMs) * time.Millisecond,
 		ReadBudget:  time.Duration(c.Timing.ReadDeadlineMs) * time.Millisecond,

@@ -1,6 +1,11 @@
 GO ?= $(shell command -v go || echo $(HOME)/.local/go/bin/go)
 UV ?= uv
 SHELL := /bin/bash
+# Resolve gofmt from the same toolchain directory as $(GO). Audit R5:
+# invoking a bare `gofmt` could silently "pass" when it was absent or
+# errored — the quality gate must fail explicitly instead.
+GOBIN := $(dir $(shell command -v "$(GO)" 2>/dev/null || echo "$(GO)"))
+GOFMT := $(GOBIN)gofmt
 
 .PHONY: all build test check sim-env sim-test integration demo demo-down native-test fault-test clean
 
@@ -14,7 +19,9 @@ test:
 	$(GO) test ./...
 
 check:
-	@test -z "$$(gofmt -l .)" || { gofmt -l .; echo "gofmt: files not formatted"; exit 1; }
+	@test -x "$(GOFMT)" || { echo "check: gofmt not found beside $(GO) ($(GOFMT))"; exit 1; }
+	@OUT="$$($(GOFMT) -l .)" || { echo "check: gofmt failed"; exit 1; }; \
+	  test -z "$$OUT" || { echo "$$OUT"; echo "gofmt: files not formatted"; exit 1; }
 	$(GO) vet ./...
 
 sim-env:
