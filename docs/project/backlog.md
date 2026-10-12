@@ -10,7 +10,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-002 — Establish the implementation plan and initial backlog](#vtx-002)
 - ✅ [VTX-003 — Bootstrap the minimal development workspace](#vtx-003)
 - ✅ [VTX-004 — Verify and freeze the simulator wire profile](#vtx-004)
-- 📋 [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
+- ✅ [VTX-005 — Implement the battery-site simulator and independent watchdog](#vtx-005)
 - 📋 [VTX-006 — Implement bounded Modbus device adapters](#vtx-006)
 - 📋 [VTX-007 — Verify the complete device integration slice](#vtx-007)
 - 📋 [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
@@ -29,7 +29,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 
 ## Delivery notes
 
-Next execution task: **VTX-003**, minimal development bootstrap. VTX-004 protocol verification is independently Ready. VTX-005/006 follow both, then VTX-007 closes M1. Refine unresolved details using evidence rather than extending the initial scope.
+Next execution task: **VTX-006**, bounded Go Modbus adapters (depends on VTX-003/004, both Done). VTX-005 is Done; VTX-007 closes M1. Refine unresolved details using evidence rather than extending the initial scope.
 
 M2: VTX-008 and VTX-009 may proceed in parallel after M1, then VTX-010 → VTX-011. M3 queue/receiver work (VTX-012/013) can overlap M1/M2 after bootstrap; VTX-014 joins them, and VTX-015 joins telemetry with verified control. M4 packaging and native verification feed fault automation, documentation and exit review.
 
@@ -169,7 +169,7 @@ Meter positive=export and the 10 s watchdog refresh rule are declared simulator 
 - Area: simulator
 - Milestone: M1
 - Priority: High
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-003](#vtx-003), [VTX-004](#vtx-004)
 - References: [device profile](features/device-profile.md)
 
@@ -186,11 +186,11 @@ Provide changing battery and meter values plus an independently timed command fa
 
 ### Completion evidence
 
-Not started; no implementation or verification claimed.
+`sim/voltix_sim/` implements a pure `Site` physics core (bounded energy/SoC, 250 kW/s track, 100 kW/s fallback, monotonic watchdog) plus a pymodbus 3.15 `SimDevice` layer: separate inverter (models 1/103/124/704) and meter (1/203) endpoints rendered from the frozen manifest, with a single `action` hook that advances physics per request, rejects malformed/partial/unrelated writes via exception codes, and refreshes the watchdog only inside the atomic FC16 WSetEna..WSet window (40170–40173). A line-oriented JSON control socket (`control.py`) provides test-only state/fault/delay/baseline control. Wire tests replay the golden fixtures over real TCP and also caught two fixture bugs (203 W/W_SF not adjacent; -2500 int16 is 0xF63C). Verified 2026-10-12: `uv run pytest -q` → 26 passed; `python -m voltix_sim` smoke run serves SunS discovery and control state.
 
 ### Notes
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+Simulator watchdog/ramp policy remains declared sim behaviour, not manufacturer conformance. `sentinel-sunssf` is retained as a decoder-side fixture for VTX-006; the sim's corrupt flag emits value sentinels only.
 
 <a id="vtx-006"></a>
 

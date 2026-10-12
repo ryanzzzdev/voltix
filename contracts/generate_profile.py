@@ -273,8 +273,8 @@ def main():
 
     fx("inverter-charge",
        "Inverter W register reading -250.0 kW (charging). "
-       "raw -2500 -> int16 0xF618; W_SF=2 -> -250000 W.",
-       fc3_req(A["inv_W"], 2), fc3_resp(0xF618, 2),
+       "raw -2500 -> int16 0xF63C; W_SF=2 -> -250000 W.",
+       fc3_req(A["inv_W"], 2), fc3_resp(0xF63C, 2),
        {"W_raw": -2500, "W_SF": 2, "watts": -250000, "kw": -250.0})
 
     fx("soc-normal",
@@ -290,14 +290,17 @@ def main():
        {"ChaState_raw": 500, "ChaState_SF": -2, "soc_pct": 5.0},
        "Second case identical with response register 9500 -> 95.0 %.")
 
+    # NB: in model 203 W (offset 18) is NOT adjacent to W_SF (offset 22);
+    # WphA/B/C sit between. Read W alone; read W_SF at its own address.
     fx("meter-export",
        "Site meter W int16 raw 1800, W_SF=2 -> +180.0 kW export.",
-       fc3_req(A["met_W"], 2), fc3_resp(1800, 2),
-       {"W_raw": 1800, "W_SF": 2, "watts": 180000, "kw": 180.0})
+       fc3_req(A["met_W"], 1), fc3_resp(1800),
+       {"W_raw": 1800, "W_SF": 2, "watts": 180000, "kw": 180.0,
+        "W_SF_address": A["met_W_SF"]})
 
     fx("meter-import",
        "Site meter W int16 raw -1200 (0xFB50), W_SF=2 -> -120.0 kW import.",
-       fc3_req(A["met_W"], 2), fc3_resp(0xFB50, 2),
+       fc3_req(A["met_W"], 1), fc3_resp(0xFB50),
        {"W_raw": -1200, "W_SF": 2, "watts": -120000, "kw": -120.0})
 
     fx("write-target-discharge",

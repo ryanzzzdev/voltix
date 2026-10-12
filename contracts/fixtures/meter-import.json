@@ -2,8 +2,8 @@
   "name": "meter-import",
   "description": "Site meter W int16 raw -1200 (0xFB50), W_SF=2 -> -120.0 kW import.",
   "unit_id": 1,
-  "request_pdu_hex": "03 9C98 0002",
-  "expected_response_pdu_hex": "03 04 FB50 0002",
+  "request_pdu_hex": "03 9C98 0001",
+  "expected_response_pdu_hex": "03 02 FB50",
   "decode": {
     "W_raw": -1200,
     "W_SF": 2,

@@ -35,6 +35,15 @@ make sim-env   # create/update the pinned simulator environment
 ./bin/voltix --config configs/example.yaml
 ```
 
-Simulator dependencies are pinned in `sim/pyproject.toml` and `sim/uv.lock` (pymodbus 3.15.0, pytest 9.1.1). Application code beyond the minimal entry point has not been implemented yet.
+Battery-site simulator (pymodbus 3.15.0, pytest 9.1.1 pinned in `sim/pyproject.toml`/`sim/uv.lock`):
+
+```bash
+cd sim
+uv run pytest -q                      # physics + wire-level tests
+uv run python -m voltix_sim           # inverter :1502, meter :1503, control :1504
+uv run python -m voltix_sim --help    # all options (ports, SoC, watchdog, baseline)
+```
+
+The controller Go code beyond the minimal entry point is not implemented yet.
 
 Read [AGENTS.md](AGENTS.md) and the documentation workflow before meaningful project work.
