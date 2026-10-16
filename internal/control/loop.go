@@ -17,11 +17,11 @@ import (
 
 // Endpoints abstract the device adapters so tests can fake them.
 type Inverter interface {
-	ReadInverter() (device.InverterReading, error)
-	SetPowerTargetW(watts int32) error
+	ReadInverter(ctx context.Context) (device.InverterReading, error)
+	SetPowerTargetW(ctx context.Context, watts int32) error
 }
 type Meter interface {
-	ReadMeter() (device.MeterReading, error)
+	ReadMeter(ctx context.Context) (device.MeterReading, error)
 }
 
 // Snapshot is one cycle's diagnostic record for the status surface.
@@ -121,12 +121,13 @@ func (l *Loop) Step(now time.Time) Snapshot {
 	}
 	invCh := make(chan invRes, 1)
 	metCh := make(chan metRes, 1)
-	go func() { r, err := l.cfg.Inverter.ReadInverter(); invCh <- invRes{r, err} }()
-	go func() { r, err := l.cfg.Meter.ReadMeter(); metCh <- metRes{r, err} }()
-	// Contract: the read phase is bounded — a stuck endpoint cannot stall
-	// the cycle past its deadline. The abandoned goroutine still exits when
-	// the endpoint's own socket deadline fires.
-	deadline := time.NewTimer(l.cfg.ReadBudget)
+	// Contract: the read phase is bounded. The context both caps how long
+	// the loop waits here and fences the adapters — operations still
+	// queued when the deadline fires return ctx.Err() instead of issuing
+	// late I/O, so waits cannot pile up during a persistent outage.
+	rctx, rcancel := context.WithTimeout(context.Background(), l.cfg.ReadBudget)
+	go func() { r, err := l.cfg.Inverter.ReadInverter(rctx); invCh <- invRes{r, err} }()
+	go func() { r, err := l.cfg.Meter.ReadMeter(rctx); metCh <- metRes{r, err} }()
 	var inv invRes
 	var met metRes
 	gotInv, gotMet := false, false
@@ -136,7 +137,7 @@ func (l *Loop) Step(now time.Time) Snapshot {
 			inv, gotInv = r, true
 		case r := <-metCh:
 			met, gotMet = r, true
-		case <-deadline.C:
+		case <-rctx.Done():
 			if !gotInv {
 				inv.err = errors.New("read phase deadline exceeded")
 			}
@@ -146,7 +147,7 @@ func (l *Loop) Step(now time.Time) Snapshot {
 			gotInv, gotMet = true, true
 		}
 	}
-	deadline.Stop()
+	rcancel()
 	readDur := time.Since(r0r)
 
 	in := policy.Inputs{
@@ -180,9 +181,11 @@ func (l *Loop) Step(now time.Time) Snapshot {
 	w0 := time.Now()
 	// Bounded write phase; a timed-out or failed write leaves the
 	// acknowledgement unknown — the next cycle ramps from measured output
-	// (WriteFailed), not the unconfirmed request.
+	// (WriteFailed), not the unconfirmed request. The context fences the
+	// endpoint: a write expired before reaching the wire never executes.
+	wctx, wcancel := context.WithTimeout(context.Background(), l.cfg.WriteBudget)
 	writeCh := make(chan error, 1)
-	go func() { writeCh <- l.cfg.Inverter.SetPowerTargetW(int32(d.TargetW)) }()
+	go func() { writeCh <- l.cfg.Inverter.SetPowerTargetW(wctx, int32(d.TargetW)) }()
 	select {
 	case err := <-writeCh:
 		if err != nil {
@@ -193,11 +196,12 @@ func (l *Loop) Step(now time.Time) Snapshot {
 			l.lastAck = &d.TargetW
 			l.writeErr = nil
 		}
-	case <-time.After(l.cfg.WriteBudget):
+	case <-wctx.Done():
 		l.lastAck = nil
 		l.writeErr = errors.New("write phase deadline exceeded")
 		l.cfg.Policy.WriteFailed()
 	}
+	wcancel()
 	writeDur := time.Since(w0)
 
 	snap := Snapshot{
@@ -241,7 +245,9 @@ func (l *Loop) publish(s Snapshot) {
 // shutdownWrite attempts one bounded zero request; failures are
 // intentionally ignored — bounded shutdown beats a last-word write.
 func (l *Loop) shutdownWrite() {
-	_ = l.cfg.Inverter.SetPowerTargetW(0)
+	ctx, cancel := context.WithTimeout(context.Background(), l.cfg.WriteBudget)
+	defer cancel()
+	_ = l.cfg.Inverter.SetPowerTargetW(ctx, 0)
 }
 
 // mono reports the session's monotonic clock — retained for tests that

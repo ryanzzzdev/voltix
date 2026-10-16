@@ -25,10 +25,10 @@ type fakeInv struct {
 	writes   []int32
 }
 
-func (f *fakeInv) ReadInverter() (device.InverterReading, error) {
+func (f *fakeInv) ReadInverter(_ context.Context) (device.InverterReading, error) {
 	return f.read()
 }
-func (f *fakeInv) SetPowerTargetW(w int32) error {
+func (f *fakeInv) SetPowerTargetW(_ context.Context, w int32) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.writes = append(f.writes, w)
@@ -44,7 +44,9 @@ type fakeMeter struct {
 	read func() (device.MeterReading, error)
 }
 
-func (f *fakeMeter) ReadMeter() (device.MeterReading, error) { return f.read() }
+func (f *fakeMeter) ReadMeter(_ context.Context) (device.MeterReading, error) {
+	return f.read()
+}
 
 type fakeSession struct {
 	mu   sync.Mutex
@@ -264,6 +266,25 @@ func TestDeviceFaultInhibits(t *testing.T) {
 	}
 }
 
+// Audit F2: a fault while the device outputs nonzero power must request
+// an immediate zero — a slew toward zero is still a nonzero command and
+// violates the inhibit contract.
+func TestFaultAtNonzeroOutputRequestsZero(t *testing.T) {
+	faulty := func() (device.InverterReading, error) {
+		return device.InverterReading{Watts: 200_000, SoCPct: 50, Status: 4, Evt1: 2}, nil
+	}
+	inv := &fakeInv{read: faulty}
+	sess := activeSession(300, 30*time.Second)
+	l := rig(inv, &fakeMeter{read: metOK(200_000)}, sess, nil)
+	snap := l.Step(t0)
+	if snap.State != policy.Fault || snap.ConstrainedW != 0 {
+		t.Fatalf("fault must request zero, got %+v", snap)
+	}
+	if w := inv.written(); len(w) != 1 || w[0] != 0 {
+		t.Fatalf("fault write must be zero, got %v", w)
+	}
+}
+
 // Audit R2: a read slower than MaxSnapshotAge must invalidate — the data
 // is too stale to decide on even though it succeeded.
 func TestSlowReadMarkedStale(t *testing.T) {
@@ -337,14 +358,25 @@ func TestWritePhaseBounded(t *testing.T) {
 	if snap.Acknowledged != nil {
 		t.Fatal("expired write must leave ack uncertain")
 	}
+	// F1: once the slow adapter finishes, the fenced write must NOT have
+	// applied — no late side effect from the abandoned operation.
+	time.Sleep(slow.delay + 200*time.Millisecond)
+	if w := inv.written(); len(w) != 0 {
+		t.Fatalf("expired write applied late: %v", w)
+	}
 }
 
+// slowWriter models the real Endpoint's ctx fencing: the write is never
+// recorded once the caller's deadline has passed.
 type slowWriter struct {
 	*fakeInv
 	delay time.Duration
 }
 
-func (s *slowWriter) SetPowerTargetW(w int32) error {
+func (s *slowWriter) SetPowerTargetW(ctx context.Context, w int32) error {
 	time.Sleep(s.delay)
-	return s.fakeInv.SetPowerTargetW(w)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return s.fakeInv.SetPowerTargetW(context.Background(), w)
 }

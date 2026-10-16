@@ -110,7 +110,7 @@ func main() {
 			"inverter": {1, 103, 124, 704},
 			"meter":    {1, 203},
 		}[name]
-		if _, err := ep.Discover(required); err != nil {
+		if _, err := ep.Discover(context.Background(), required); err != nil {
 			log.Fatalf("%s identity: %v", name, err)
 		}
 	}

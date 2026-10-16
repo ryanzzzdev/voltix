@@ -1,6 +1,7 @@
 package device
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -10,8 +11,12 @@ import (
 
 // Endpoint owns one Modbus TCP connection to a device endpoint.
 //
-// Requests are serialised per endpoint. The library sets a real socket
-// read/write deadline of Timeout on every request, so each call returns
+// Requests are serialised per endpoint by a one-slot semaphore acquired
+// through the caller's context: a call whose deadline expires while
+// queued returns ctx.Err() instead of executing late, so bounded-phase
+// callers cannot pile up behind a stuck request and an expired write
+// never reaches the wire. The library sets a real socket read/write
+// deadline of Timeout on every request, so an in-flight call returns
 // within roughly Timeout once connected. A failed request closes the
 // connection; read operations transparently reconnect and retry once,
 // write operations never retry (a timed-out write is uncertain).
@@ -20,7 +25,8 @@ type Endpoint struct {
 	unitID  uint8
 	timeout time.Duration
 
-	mu     sync.Mutex
+	sem    chan struct{} // one in-flight operation
+	mu     sync.Mutex    // guards client
 	client *modbus.ModbusClient
 }
 
@@ -28,8 +34,22 @@ type Endpoint struct {
 // timeout bounds each request's socket I/O; the initial dial is bounded
 // separately by the library's fixed 5 s connect timeout.
 func NewEndpoint(addr string, timeout time.Duration) *Endpoint {
-	return &Endpoint{addr: addr, unitID: UnitID, timeout: timeout}
+	return &Endpoint{addr: addr, unitID: UnitID, timeout: timeout,
+		sem: make(chan struct{}, 1)}
 }
+
+// acquire serialises one operation; callers waiting past their deadline
+// exit instead of queueing behind a stuck request.
+func (e *Endpoint) acquire(ctx context.Context) error {
+	select {
+	case e.sem <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (e *Endpoint) release() { <-e.sem }
 
 // Close drops the connection if held; the next request reconnects lazily.
 func (e *Endpoint) Close() {
@@ -66,18 +86,30 @@ func (e *Endpoint) connectLocked() error {
 	return nil
 }
 
-// doRead serialises a request with at most one reconnect+retry.
-func (e *Endpoint) doRead(op string, fn func(c *modbus.ModbusClient) error) error {
+// doRead serialises a request with at most one reconnect+retry. The
+// context fences the queued stages: an operation expired before reaching
+// the socket never issues I/O.
+func (e *Endpoint) doRead(ctx context.Context, op string, fn func(c *modbus.ModbusClient) error) error {
+	if err := e.acquire(ctx); err != nil {
+		return err
+	}
+	defer e.release()
+
 	e.mu.Lock()
 	defer e.mu.Unlock()
-
 	var last error
 	for attempt := 0; attempt < 2; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
 		if e.client == nil {
 			if err := e.connectLocked(); err != nil {
 				last = err
 				continue
 			}
+		}
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("%s: %w", op, err)
 		}
 		err := fn(e.client)
 		if err == nil {
@@ -91,15 +123,27 @@ func (e *Endpoint) doRead(op string, fn func(c *modbus.ModbusClient) error) erro
 
 // doWrite serialises a write with no retry: the connection is reset after
 // failure so the next call starts clean, but the write itself is not
-// replayed because a timed-out write may already have been applied.
-func (e *Endpoint) doWrite(op string, fn func(c *modbus.ModbusClient) error) error {
+// replayed because a timed-out write may already have been applied. A
+// write whose context expired while queued behind another operation is
+// fenced before the request is issued — it can never apply late.
+func (e *Endpoint) doWrite(ctx context.Context, op string, fn func(c *modbus.ModbusClient) error) error {
+	if err := e.acquire(ctx); err != nil {
+		return err
+	}
+	defer e.release()
+
 	e.mu.Lock()
 	defer e.mu.Unlock()
-
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
 	if e.client == nil {
 		if err := e.connectLocked(); err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	if err := fn(e.client); err != nil {
 		e.closeLocked()

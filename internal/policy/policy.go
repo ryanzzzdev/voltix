@@ -125,10 +125,11 @@ func (s *Supervisor) Step(in Inputs) Decision {
 
 	switch {
 	case in.DeviceFault:
-		// Contract: fault inhibits nonzero commands AND invalidates the
-		// intent — recovery requires clear status plus a fresh dispatch.
+		// Contract: fault inhibits nonzero commands — an immediate zero
+		// request, not a slew toward zero — AND invalidates the intent;
+		// recovery requires clear status plus a fresh dispatch.
 		reason(ReasonDeviceFault)
-		d.State, d.Invalidate, d.TargetW = Fault, true, s.rampTo(in, 0, first, true)
+		d.State, d.Invalidate, d.TargetW = Fault, true, 0
 	case !in.InverterOK || !in.MeterOK || math.IsNaN(in.SoCPct) || math.IsInf(in.SoCPct, 0):
 		reason(ReasonInvalidInput)
 		d.State, d.Invalidate, d.TargetW = Degraded, true, s.rampTo(in, 0, first, gap)

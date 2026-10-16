@@ -1,6 +1,7 @@
 package device
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -26,9 +27,9 @@ type MeterReading struct {
 // Discover validates the SunS marker and walks the model chain at AddrBase,
 // returning the model IDs found. It fails if the chain does not terminate
 // within the bounded model table or if a required model is absent.
-func (e *Endpoint) Discover(required []uint16) ([]uint16, error) {
+func (e *Endpoint) Discover(ctx context.Context, required []uint16) ([]uint16, error) {
 	var models []uint16
-	err := e.doRead("sunspec discovery", func(c *modbus.ModbusClient) error {
+	err := e.doRead(ctx, "sunspec discovery", func(c *modbus.ModbusClient) error {
 		marker, err := c.ReadRegisters(AddrBase, 2, modbus.HOLDING_REGISTER)
 		if err != nil {
 			return err
@@ -64,9 +65,9 @@ func (e *Endpoint) Discover(required []uint16) ([]uint16, error) {
 	return models, nil
 }
 
-func (e *Endpoint) readRegs(addr, count uint16) ([]uint16, error) {
+func (e *Endpoint) readRegs(ctx context.Context, addr, count uint16) ([]uint16, error) {
 	var regs []uint16
-	err := e.doRead(fmt.Sprintf("read %d+%d", addr, count), func(c *modbus.ModbusClient) error {
+	err := e.doRead(ctx, fmt.Sprintf("read %d+%d", addr, count), func(c *modbus.ModbusClient) error {
 		r, err := c.ReadRegisters(addr, count, modbus.HOLDING_REGISTER)
 		regs = r
 		return err
@@ -76,10 +77,10 @@ func (e *Endpoint) readRegs(addr, count uint16) ([]uint16, error) {
 
 // ReadInverter reads measured power, SoC, status and the watchdog event
 // register with per-point sentinel checks.
-func (e *Endpoint) ReadInverter() (InverterReading, error) {
+func (e *Endpoint) ReadInverter(ctx context.Context) (InverterReading, error) {
 	var r InverterReading
 
-	pw, err := e.readRegs(AddrInvW, 2) // W, W_SF are adjacent in model 103
+	pw, err := e.readRegs(ctx, AddrInvW, 2) // W, W_SF are adjacent in model 103
 	if err != nil {
 		return r, err
 	}
@@ -87,14 +88,14 @@ func (e *Endpoint) ReadInverter() (InverterReading, error) {
 		return r, fmt.Errorf("inverter W: %w", err)
 	}
 
-	soc, err := e.readRegs(AddrInvChaState, 1)
+	soc, err := e.readRegs(ctx, AddrInvChaState, 1)
 	if err != nil {
 		return r, err
 	}
 	if soc[0] == Uint16Sentinel {
 		return r, fmt.Errorf("ChaState: %w", ErrInvalidData)
 	}
-	sf, err := e.readRegs(AddrInvChaStateSF, 1)
+	sf, err := e.readRegs(ctx, AddrInvChaStateSF, 1)
 	if err != nil {
 		return r, err
 	}
@@ -103,7 +104,7 @@ func (e *Endpoint) ReadInverter() (InverterReading, error) {
 	}
 	r.SoCPct = float64(soc[0]) * math.Pow10(int(int16(sf[0])))
 
-	st, err := e.readRegs(AddrInvSt, 1)
+	st, err := e.readRegs(ctx, AddrInvSt, 1)
 	if err != nil {
 		return r, err
 	}
@@ -112,7 +113,7 @@ func (e *Endpoint) ReadInverter() (InverterReading, error) {
 	}
 	r.Status = st[0]
 
-	evt, err := e.readRegs(AddrInvEvt1, 2)
+	evt, err := e.readRegs(ctx, AddrInvEvt1, 2)
 	if err != nil {
 		return r, err
 	}
@@ -125,13 +126,13 @@ func (e *Endpoint) ReadInverter() (InverterReading, error) {
 
 // ReadMeter reads site power; W and W_SF are not adjacent in model 203 so
 // they are fetched separately.
-func (e *Endpoint) ReadMeter() (MeterReading, error) {
+func (e *Endpoint) ReadMeter(ctx context.Context) (MeterReading, error) {
 	var r MeterReading
-	w, err := e.readRegs(AddrMetW, 1)
+	w, err := e.readRegs(ctx, AddrMetW, 1)
 	if err != nil {
 		return r, err
 	}
-	sf, err := e.readRegs(AddrMetWSF, 1)
+	sf, err := e.readRegs(ctx, AddrMetWSF, 1)
 	if err != nil {
 		return r, err
 	}
@@ -144,8 +145,8 @@ func (e *Endpoint) ReadMeter() (MeterReading, error) {
 // SetPowerTargetW writes the atomic 4-register window WSetEna..WSet in one
 // FC16 request: enable + watts mode + signed int32 target. A timeout returns
 // ErrWriteUncertain and the write is never replayed by the adapter.
-func (e *Endpoint) SetPowerTargetW(watts int32) error {
-	return e.doWrite("write power target", func(c *modbus.ModbusClient) error {
+func (e *Endpoint) SetPowerTargetW(ctx context.Context, watts int32) error {
+	return e.doWrite(ctx, "write power target", func(c *modbus.ModbusClient) error {
 		return c.WriteRegisters(AddrCtlWSet, []uint16{
 			1, // WSetEna = ENABLED
 			1, // WSetMod = WATTS

@@ -1,9 +1,12 @@
 package device
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/simonvetter/modbus"
 )
 
 func testEndpoint(t *testing.T, s *fakeServer) *Endpoint {
@@ -17,7 +20,7 @@ func TestDiscoverAndReadInverter(t *testing.T) {
 	s := newFakeServer(t, inverterRegs(2500, 2, 5000, 0xFFFE, 4, 0, 0))
 	e := testEndpoint(t, s)
 
-	models, err := e.Discover(InverterModels)
+	models, err := e.Discover(context.Background(), InverterModels)
 	if err != nil {
 		s.mu.Lock()
 		t.Fatalf("%v — server log %v", err, s.log)
@@ -26,7 +29,7 @@ func TestDiscoverAndReadInverter(t *testing.T) {
 		t.Fatalf("unexpected model chain %v", models)
 	}
 
-	r, err := e.ReadInverter()
+	r, err := e.ReadInverter(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +43,7 @@ func TestDiscoverRejectsMissingModel(t *testing.T) {
 	regs[40148], regs[40149] = EndMarkerID, 0 // drop model 704
 	s := newFakeServer(t, regs)
 	e := testEndpoint(t, s)
-	if _, err := e.Discover(InverterModels); !errors.Is(err, ErrDiscovery) {
+	if _, err := e.Discover(context.Background(), InverterModels); !errors.Is(err, ErrDiscovery) {
 		t.Fatalf("want ErrDiscovery, got %v", err)
 	}
 }
@@ -55,7 +58,7 @@ func TestReadInverterSentinels(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := newFakeServer(t, regs)
 			e := testEndpoint(t, s)
-			if _, err := e.ReadInverter(); !errors.Is(err, ErrInvalidData) {
+			if _, err := e.ReadInverter(context.Background()); !errors.Is(err, ErrInvalidData) {
 				t.Fatalf("want ErrInvalidData, got %v", err)
 			}
 		})
@@ -67,7 +70,7 @@ func TestReadMeterNegativeImport(t *testing.T) {
 		AddrMetW: 0xFB50, AddrMetWSF: 2, // -1200 x 10^2
 	})
 	e := testEndpoint(t, s)
-	r, err := e.ReadMeter()
+	r, err := e.ReadMeter(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +82,7 @@ func TestReadMeterNegativeImport(t *testing.T) {
 func TestSetPowerTargetWireFormat(t *testing.T) {
 	s := newFakeServer(t, map[uint16]uint16{})
 	e := testEndpoint(t, s)
-	if err := e.SetPowerTargetW(-250000); err != nil {
+	if err := e.SetPowerTargetW(context.Background(), -250000); err != nil {
 		t.Fatal(err)
 	}
 	s.mu.Lock()
@@ -100,7 +103,7 @@ func TestRequestTimeoutIsBounded(t *testing.T) {
 	t.Cleanup(e.Close)
 
 	start := time.Now()
-	if _, err := e.ReadMeter(); !errors.Is(err, ErrTimeout) {
+	if _, err := e.ReadMeter(context.Background()); !errors.Is(err, ErrTimeout) {
 		t.Fatalf("want ErrTimeout, got %v", err)
 	}
 	if el := time.Since(start); el > 2*80*time.Millisecond+100*time.Millisecond {
@@ -117,7 +120,7 @@ func TestMalformedResponse(t *testing.T) {
 	// Unparsable bytes cannot be decoded as a frame, so the request ends at
 	// the socket deadline — a bounded failure either way.
 	start := time.Now()
-	if _, err := e.ReadMeter(); err == nil {
+	if _, err := e.ReadMeter(context.Background()); err == nil {
 		t.Fatal("malformed response must not decode silently")
 	}
 	if time.Since(start) > 500*time.Millisecond {
@@ -130,11 +133,11 @@ func TestReconnectAfterHangup(t *testing.T) {
 	e := testEndpoint(t, s)
 
 	s.set(func(f *fakeServer) { f.hangup = true })
-	if _, err := e.ReadMeter(); err == nil {
+	if _, err := e.ReadMeter(context.Background()); err == nil {
 		t.Fatal("want error on dropped connection")
 	}
 	s.set(func(f *fakeServer) { f.hangup = false })
-	r, err := e.ReadMeter()
+	r, err := e.ReadMeter(context.Background())
 	if err != nil {
 		t.Fatalf("reconnect failed: %v", err)
 	}
@@ -150,11 +153,55 @@ func TestWriteTimeoutIsUncertain(t *testing.T) {
 	t.Cleanup(e.Close)
 
 	start := time.Now()
-	err := e.SetPowerTargetW(1000)
+	err := e.SetPowerTargetW(context.Background(), 1000)
 	if !errors.Is(err, ErrWriteUncertain) {
 		t.Fatalf("want ErrWriteUncertain, got %v", err)
 	}
 	if time.Since(start) > 500*time.Millisecond {
 		t.Fatal("uncertain write was not bounded")
+	}
+}
+
+// Follow-up audit F1: an operation whose context expires while queued
+// behind the semaphore must be fenced — it returns ctx.Err() and its I/O
+// closure never runs, so a stale write can never reach the wire late.
+func TestExpiredQueuedWriteIsFenced(t *testing.T) {
+	e := NewEndpoint("127.0.0.1:1", time.Second) // unroutable target; must never dial
+	t.Cleanup(e.Close)
+
+	e.sem <- struct{}{} // simulate an in-flight operation
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	ran := false
+	err := e.doWrite(ctx, "fenced write", func(c *modbus.ModbusClient) error {
+		ran = true
+		return nil
+	})
+	<-e.sem
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("want context deadline, got %v", err)
+	}
+	if ran {
+		t.Fatal("expired queued write executed I/O")
+	}
+}
+
+// A second queued op must also exit at its own deadline rather than
+// waiting for a stuck holder — bounds outstanding operations during a
+// persistent outage.
+func TestAdmissionBoundedByContext(t *testing.T) {
+	e := NewEndpoint("127.0.0.1:1", time.Second)
+	t.Cleanup(e.Close)
+	e.sem <- struct{}{}
+	defer func() { <-e.sem }()
+
+	start := time.Now()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	defer cancel()
+	if err := e.acquire(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("want deadline, got %v", err)
+	}
+	if d := time.Since(start); d > 300*time.Millisecond {
+		t.Fatalf("admission not bounded by context: %v", d)
 	}
 }

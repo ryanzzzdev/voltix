@@ -7,6 +7,7 @@ package device
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,14 +105,14 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 	defer met.Close()
 
 	// --- discovery and initial readings ------------------------------------
-	models, err := inv.Discover(InverterModels)
+	models, err := inv.Discover(context.Background(), InverterModels)
 	if err != nil || len(models) != 4 {
 		t.Fatalf("inverter discovery: %v %v", models, err)
 	}
-	if models, err = met.Discover(MeterModels); err != nil || len(models) != 2 {
+	if models, err = met.Discover(context.Background(), MeterModels); err != nil || len(models) != 2 {
 		t.Fatalf("meter discovery: %v %v", models, err)
 	}
-	r, err := inv.ReadInverter()
+	r, err := inv.ReadInverter(context.Background())
 	if err != nil || r.SoCPct < 49 || r.SoCPct > 51 {
 		t.Fatalf("initial reading %+v err %v", r, err)
 	}
@@ -119,21 +120,21 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 	// Changing simulated state must show up on the wire.
 	ctl.cmd(t, "set_soc_pct", 60.0)
 	ctl.cmd(t, "set_baseline_kw", 10.0)
-	r, _ = inv.ReadInverter()
+	r, _ = inv.ReadInverter(context.Background())
 	if r.SoCPct != 60.0 {
 		t.Fatalf("SoC change not observed: %v", r.SoCPct)
 	}
-	m, err := met.ReadMeter()
+	m, err := met.ReadMeter(context.Background())
 	if err != nil || m.Watts != 10000 {
 		t.Fatalf("baseline export not observed: %+v err %v", m, err)
 	}
 
 	// --- accepted vs measured power, positive and negative ------------------
-	if err := inv.SetPowerTargetW(250000); err != nil {
+	if err := inv.SetPowerTargetW(context.Background(), 250000); err != nil {
 		t.Fatalf("discharge write: %v", err)
 	}
 	if !poll(t, 3*time.Second, func() bool {
-		r, err = inv.ReadInverter()
+		r, err = inv.ReadInverter(context.Background())
 		return err == nil && r.Watts == 250000
 	}) {
 		t.Fatalf("measured output never reached +250 kW (last %+v)", r)
@@ -141,7 +142,7 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 
 	// Wire cross-check: the applied setpoint window must match the golden
 	// write-target registers independently of the sim's physics.
-	win, err := inv.readRegs(AddrCtlWSet, 4)
+	win, err := inv.readRegs(context.Background(), AddrCtlWSet, 4)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,12 +150,12 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 		t.Fatalf("WSet window %v != golden [1 1 0003 D090]", win)
 	}
 
-	if err := inv.SetPowerTargetW(-250000); err != nil {
+	if err := inv.SetPowerTargetW(context.Background(), -250000); err != nil {
 		t.Fatalf("charge write: %v", err)
 	}
 	lastWrite := time.Now() // the device's 10 s deadline runs from this accept
 	if !poll(t, 4*time.Second, func() bool {
-		r, err = inv.ReadInverter()
+		r, err = inv.ReadInverter(context.Background())
 		return err == nil && r.Watts == -250000
 	}) {
 		t.Fatalf("measured output never reached -250 kW (last %+v)", r)
@@ -165,13 +166,13 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 	// lastWrite, not from the polls); before expiry the target still tracks;
 	// after expiry the device ramps to zero and sets Evt1 bit0.
 	for time.Now().Before(lastWrite.Add(8500 * time.Millisecond)) {
-		if r, err = inv.ReadInverter(); err != nil || r.Watts != -250000 {
+		if r, err = inv.ReadInverter(context.Background()); err != nil || r.Watts != -250000 {
 			t.Fatalf("poll broke tracking before watchdog: %+v %v", r, err)
 		}
 		time.Sleep(400 * time.Millisecond)
 	}
 	if !poll(t, 6*time.Second, func() bool {
-		r, err = inv.ReadInverter()
+		r, err = inv.ReadInverter(context.Background())
 		return err == nil && r.Watts == 0 && r.Evt1&1 == 1
 	}) {
 		t.Fatalf("watchdog did not trip to zero: %+v err %v", r, err)
@@ -180,7 +181,7 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 	// --- bounded failure and recovery ----------------------------------------
 	ctl.cmd(t, "set_delay_ms", 400)
 	start := time.Now()
-	if _, err = met.ReadMeter(); !errors.Is(err, ErrTimeout) {
+	if _, err = met.ReadMeter(context.Background()); !errors.Is(err, ErrTimeout) {
 		t.Fatalf("delayed reply: want ErrTimeout, got %v", err)
 	}
 	// Two bounded attempts: request timeout -> reconnect -> request timeout.
@@ -191,19 +192,19 @@ func TestDeviceIntegrationSlice(t *testing.T) {
 
 	ctl.cmd(t, "set_online", false)
 	start = time.Now()
-	if _, err = met.ReadMeter(); err == nil {
+	if _, err = met.ReadMeter(context.Background()); err == nil {
 		t.Fatal("offline device must error")
 	}
 	if el := time.Since(start); el > 1200*time.Millisecond {
 		t.Fatalf("offline reply unbounded: %v", el)
 	}
 	ctl.cmd(t, "set_online", true)
-	if m, err = met.ReadMeter(); err != nil {
+	if m, err = met.ReadMeter(context.Background()); err != nil {
 		t.Fatalf("no recovery after online restore: %v", err)
 	}
 
 	ctl.cmd(t, "set_corrupt", true)
-	if _, err = inv.ReadInverter(); !errors.Is(err, ErrInvalidData) {
+	if _, err = inv.ReadInverter(context.Background()); !errors.Is(err, ErrInvalidData) {
 		t.Fatalf("corrupt values: want ErrInvalidData, got %v", err)
 	}
 	ctl.cmd(t, "set_corrupt", false)

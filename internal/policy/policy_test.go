@@ -200,7 +200,9 @@ func TestDeviceFaultInhibits(t *testing.T) {
 	in := healthy(at(1), 100_000, 100_000, 50, intent(at(1), 300_000, 30))
 	in.DeviceFault = true
 	d := s.Step(in)
-	if d.State != Fault || !hasReason(d, ReasonDeviceFault) || d.TargetW != 50_000 {
+	// Contract: inhibit nonzero commands — hard zero at nonzero measured
+	// output (not a slew step), and the intent is invalidated.
+	if d.State != Fault || !hasReason(d, ReasonDeviceFault) || d.TargetW != 0 || !d.Invalidate {
 		t.Fatalf("fault: %v %d %v", d.State, d.TargetW, d.Reasons)
 	}
 }
