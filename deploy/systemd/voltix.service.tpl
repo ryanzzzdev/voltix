@@ -1,6 +1,7 @@
 # Voltix edge controller — systemd USER unit (no root, no host service).
 # Template rendered by deploy/systemd/install.sh; @...@ placeholders are
 # substituted with the install paths. Do not install this file directly.
+# voltix-owner: @OWNER_TAG@
 [Unit]
 Description=Voltix edge controller (user demo instance)
 After=network-online.target

@@ -16,22 +16,24 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
-- ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
+- 🟢 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
-- ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
+- 🟢 [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - ✅ [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - ✅ [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
-- ✅ [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
+- 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 
 - ✅ [VTX-021 — Independently audit milestone completion](#vtx-021)
 
+- ✅ [VTX-023 — Recheck the audit corrections](#vtx-023)
+
 ## Delivery notes
 
-Independent audit VTX-021 found unmet completion criteria and two reproduced control regressions; all five reopened tasks were corrected and re-verified 2026-10-12 (see per-task notes, commits e05caa2/6715588/8ba02d9/695846f). Remaining: [VTX-022](#vtx-022) — privileged-environment verification of true ENOSPC and packet-level faults, open follow-up under decision 004. Findings and priorities: [audit](evidence/review/m4-independent-audit.md). Next unused task ID: VTX-023.
+Follow-up audit VTX-023 found two remaining control regressions and native cleanup edge cases. Next: VTX-011 operation-lifetime/fault-target corrections and VTX-017 ownership-aware cleanup; VTX-020 rechecks completion afterwards. VTX-022 retains privileged-environment follow-ups. See [review](evidence/review/m4-followup-audit.md). Next unused ID: VTX-024.
 
 <a id="vtx-001"></a>
 
@@ -353,7 +355,7 @@ Simplification recorded: `MeasuredAt` is the cycle read-start time, so "input ag
 - Area: integration
 - Milestone: M2
 - Priority: High
-- Status: Done ✅
+- Status: Ready 🟢
 - Depends on: [VTX-010](#vtx-010)
 - References: [control](features/control.md), [verification](features/verification.md)
 
@@ -374,11 +376,25 @@ Prove the M2 behaviour against real simulator and dispatch processes.
 
 ### Notes
 
+Reopened again by [follow-up audit](evidence/review/m4-followup-audit.md) at 6d57fc1: remaining findings assigned to this task must pass before closure. Previous corrective results remain historical.
+
 Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
 
 Corrective cycle 2026-10-12 (commit e05caa2): device fault now sets `Invalidate` — intent dropped, FAULT output ramped to 0, and post-clear recovery requires a newly accepted dispatch (was: stale intent silently resumed). Read/write phases are bounded by `read_deadline_ms`/`write_deadline_ms` (now actually wired through strict config); `MeasuredAt` is acquisition-start and `DecisionAt` is post-read, so a slow successful read beyond `max_input_age_s` reports STALE_INPUT and invalidates; a failed/expired write calls `Policy.WriteFailed`, resetting the ramp baseline to measured output rather than the unacknowledged request. New regressions: fault drop+zero+no-auto-resume, slow-read staleness, bounded read/write phases, write-failure rebaseline. `go test ./internal/control ./internal/policy` green; `-race ./...` clean; full integration e2e 45.8 s.
 
 Design truth surfaced by the test: expiry/gap DEGRADED is a single-cycle state — after intent invalidation the loop is STANDBY, so the e2e asserts durable evidence (`dispatch_active=false`) rather than racing the transient state.
+
+Follow-up audit cycle 2026-10-12 (F1/F2): device ops are now
+context-deadline-aware end to end — `Endpoint` serialises calls through a
+one-slot semaphore acquired via ctx, so waiters exit at their deadline
+instead of piling up during outages, and an expired queued write is
+fenced before it can issue I/O (no late target application).
+FAULT now requests an immediate zero — a slew toward zero was still a
+nonzero command. Regression coverage: `TestFaultAtNonzeroOutputRequestsZero`
+(200 kW measured -> 0 target), `TestExpiredQueuedWriteIsFenced` and
+`TestAdmissionBoundedByContext` (endpoint seam), `TestWritePhaseBounded`
+now asserts the expired write never applied. Verified: unit + `-race`
+./... green, integration e2e 51.4 s.
 
 <a id="vtx-012"></a>
 
@@ -547,7 +563,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: deployment
 - Milestone: M4
 - Priority: Normal
-- Status: Done ✅
+- Status: Ready 🟢
 - Depends on: [VTX-015](#vtx-015)
 - References: [architecture](architecture.md), [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
@@ -568,11 +584,23 @@ Verify the controller as an unprivileged systemd service in an explicitly select
 
 ### Notes
 
+Reopened again by [follow-up audit](evidence/review/m4-followup-audit.md) at 6d57fc1: remaining findings assigned to this task must pass before closure. Previous corrective results remain historical.
+
 Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
 
 Corrective cycle 2026-10-12 (commit 6715588): the harness can no longer touch a developer install. install.sh/remove.sh accept `VOLTIX_UNIT_NAME`/`VOLTIX_BIN_PATH`/`VOLTIX_CONFIG_DIR`/`VOLTIX_STATE_NAME` overrides, `VOLTIX_REFUSE_EXISTING=1` aborts on any pre-existing path, and native-test runs under PID-unique names with an EXIT-trap cleanup, canonical-path guard snapshots, and post-cleanup leak assertions. remove.sh resolves the StateDirectory symlink layout and only removes resolved paths under the per-user trees. Verified: 13/13 including `all test-created resources removed` and `canonical install paths untouched`.
 
 Execute when dependencies are complete; capture actual evidence before marking Done.
+
+Follow-up audit cycle 2026-10-12 (F3): remove.sh handles both
+StateDirectory layouts (symlink and plain dir; the prior `rm -f` aborted
+under set -e on a real directory) and accepts `VOLTIX_OWNER_TAG` —
+unit file + config `.voltix-owner` marker must both match before any
+resource is removed, so a stale same-name path after PID reuse is left
+untouched. native-test fails fast when install is refused, fingerprints
+canonical paths by content hash rather than existence, and self-tests the
+refusal paths (foreign same-name resources neither overwritten nor
+deleted). Verified 16/16.
 
 <a id="vtx-018"></a>
 
@@ -648,7 +676,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M4
 - Priority: Normal
-- Status: Done ✅
+- Status: Backlog 📋
 - Depends on: [VTX-019](#vtx-019)
 - References: [roadmap](roadmap.md), [verification](features/verification.md)
 
@@ -668,6 +696,8 @@ Close the local portfolio milestone only when its documented evidence supports c
 `evidence/demo/exit-review.md` reconciles all 14 verification-matrix rows with actual results; `.github/workflows/ci.yml` defines nonprivileged hosted checks (gofmt/vet/test/-race/build, sim tests, loopback integration) while demo/fault/native stay the documented local path — hosted execution explicitly unverified (no remote authorised or observed). Resource exercise (matrix H): `scripts/resource-run.sh` — 30 min at 1 Hz with ~5-min mock outage: 1805 events all uploaded, depth peaked 298 at resume then drained to <=5 in ~10 s (replay far faster than production), upload_failed=14 bounded, RSS 14.4->21.1->20.0 MB, loop reads 1-8 ms throughout, zero persistent loss. Re-ran all check commands locally 2026-10-12: gofmt clean, vet clean, go test + -race green, sim 26/26, make demo/fault-test (16/16)/native-test (11/11). Open follow-ups recorded: real ENOSPC fault injection, packet-level faults (netns denied), OOM-under-load, hosted CI. No accounts created, nothing pushed.
 
 ### Notes
+
+Reopened again by [follow-up audit](evidence/review/m4-followup-audit.md) at 6d57fc1: remaining findings assigned to this task must pass before closure. Previous corrective results remain historical.
 
 Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-audit.md). Prior completion evidence below/above remains historical; address the audit findings assigned to this task before claiming its acceptance criteria met.
 
@@ -738,3 +768,33 @@ Not run — no privileged environment is available on the development host
 (`unshare -r -n` uid_map denied; /run/user tmpfs unsafe to fill). The
 EFBIG-class store test and application/process-level fault suite cover
 the same handling paths meanwhile; see decision 004.
+
+<a id="vtx-023"></a>
+
+## VTX-023 — Recheck the audit corrections
+
+- Repository: voltix
+- Area: integration
+- Milestone: M4
+- Priority: High
+- Status: Done ✅
+- Depends on: None (independent correction review)
+- References: [Follow-up findings](evidence/review/m4-followup-audit.md)
+
+### Outcome
+
+Independently assess corrective commits through 6d57fc1 against the prior findings.
+
+### Done when
+
+- Inspect corrections and rerun relevant existing checks.
+- Verify remaining failure boundaries with focused reproductions.
+- Record results, limitations and accurate milestone/task state.
+
+### Completion evidence
+
+Existing uncached Go race and simulator suites pass; two focused control regressions fail. See report for integration results and source-inspected cleanup defects. Temporary regression file removed; documentation changes uncommitted, production code unchanged.
+
+### Notes
+
+Review complete; VTX-011, VTX-017 and VTX-020 are reopened. M3's storage-failure correction remains recorded separately from pending privileged ENOSPC verification.

@@ -10,10 +10,14 @@
 #   VOLTIX_CONFIG_DIR   config + env dir      (default ~/.config/voltix)
 #   VOLTIX_STATE_NAME   StateDirectory name   (default voltix)
 #   VOLTIX_REFUSE_EXISTING=1  abort if any target path already exists
+#   VOLTIX_OWNER_TAG          stamp created resources; remove.sh then
+#                             refuses to delete resources it cannot prove
+#                             this installation created
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 UNIT_NAME="${VOLTIX_UNIT_NAME:-voltix.service}"
+OWNER_TAG="${VOLTIX_OWNER_TAG:-}"
 BIN_PATH="${VOLTIX_BIN_PATH:-$HOME/.local/libexec/voltix}"
 CONFIG_DIR="${VOLTIX_CONFIG_DIR:-$HOME/.config/voltix}"
 STATE_NAME="${VOLTIX_STATE_NAME:-voltix}"
@@ -40,8 +44,10 @@ sed -e "s|@BIN_PATH@|$BIN_PATH|" \
     -e "s|@CONFIG_PATH@|$CONFIG_DIR/native.yaml|" \
     -e "s|@ENV_PATH@|$CONFIG_DIR/env|" \
     -e "s|@STATE_NAME@|$STATE_NAME|" \
+    -e "s|@OWNER_TAG@|$OWNER_TAG|" \
     "$ROOT/deploy/systemd/voltix.service.tpl" > "$UNIT_PATH"
 chmod 0644 "$UNIT_PATH"
+[ -n "$OWNER_TAG" ] && printf '%s\n' "$OWNER_TAG" > "$CONFIG_DIR/.voltix-owner"
 
 # Demo-only tokens (600); override later if wiring a real mock.
 if [ ! -f "$CONFIG_DIR/env" ]; then

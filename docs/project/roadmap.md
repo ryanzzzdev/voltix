@@ -1,7 +1,7 @@
 # Voltix roadmap
 
 Updated: 2026-10-12
-Status: Audit findings corrected and re-verified 2026-10-12 — milestones Complete under the fault-injection scope revision in [decision 004](decisions/004-local-fault-injection-scope.md); privileged-environment checks remain open as VTX-022. See [audit](evidence/review/m4-independent-audit.md).
+Status: Follow-up audit findings F1–F3 corrected and re-verified 2026-10-12 — all milestones Complete under the fault-injection scope revision in [decision 004](decisions/004-local-fault-injection-scope.md); privileged-environment checks remain open as VTX-022. See [follow-up audit](evidence/review/m4-followup-audit.md) resolution section.
 
 Build a reproducible, simulated battery-site controller that demonstrates device integration, explicit operating policies, and failure recovery. This is an engineering portfolio, not a certified controller or a Tesla-compatible product. Scope and rationale: [decision 002](decisions/002-scope-and-delivery.md).
 

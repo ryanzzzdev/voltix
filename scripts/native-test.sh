@@ -24,6 +24,7 @@ export VOLTIX_UNIT_NAME="$UNIT_NAME" \
        VOLTIX_BIN_PATH="$HOME/.local/libexec/$TAG" \
        VOLTIX_CONFIG_DIR="$HOME/.config/$TAG" \
        VOLTIX_STATE_NAME="$TAG" \
+       VOLTIX_OWNER_TAG="$TAG" \
        VOLTIX_REFUSE_EXISTING=1
 UNIT_PATH="$HOME/.config/systemd/user/$UNIT_NAME"
 UNITDIR="$HOME/.local/state/$TAG"
@@ -33,7 +34,19 @@ GUARD_PATHS=("$HOME/.config/systemd/user/voltix.service"
              "$HOME/.local/libexec/voltix"
              "$HOME/.config/voltix"
              "$HOME/.local/state/voltix")
-guard() { for p in "${GUARD_PATHS[@]}"; do [ -e "$p" ] || [ -L "$p" ] && echo "$p"; done; }
+# Content fingerprints (not mere existence) so the guard detects the
+# harness modifying a pre-existing install even in passing.
+guard() {
+  for p in "${GUARD_PATHS[@]}"; do
+    if [ -d "$p" ]; then
+      echo "dir $p $(find -L "$p" -type f -exec sha256sum {} + 2>/dev/null | sort | sha256sum | cut -d' ' -f1)"
+    elif [ -f "$p" ]; then
+      echo "file $p $(sha256sum "$p" | cut -d' ' -f1)"
+    elif [ -L "$p" ]; then
+      echo "link $p -> $(readlink "$p")"
+    fi
+  done
+}
 
 SIM_PID=""; MOCK_PID=""; MOCK_DIR=""
 PASS=0; FAIL=0
@@ -47,7 +60,11 @@ jget()   { python3 -c "import json,sys;print(json.load(sys.stdin)$1)" 2>/dev/nul
 
 cleanup() {
   say "cleanup"
-  "$ROOT/deploy/systemd/remove.sh" >/dev/null 2>&1 || true
+  # Ownership-tagged removal: a refusal means the resources aren't ours —
+  # report it rather than force-delete.
+  if ! "$ROOT/deploy/systemd/remove.sh" >/dev/null 2>&1; then
+    echo "cleanup: remove.sh refused — leaving foreign resources untouched" >&2
+  fi
   [ -n "$SIM_PID" ] && kill "$SIM_PID" 2>/dev/null
   [ -n "$MOCK_PID" ] && kill "$MOCK_PID" 2>/dev/null
   [ -n "$MOCK_DIR" ] && rm -rf "$MOCK_DIR"
@@ -74,8 +91,35 @@ VOLTIX_TELEMETRY_TOKEN=$TTOK "$ROOT/bin/upstream-mock" \
 MOCK_PID=$!
 sleep 2
 
+say "refusal safety: foreign same-name resources"
+# Plant foreign resources at THIS run's paths (no owner tag — simulates a
+# stale install after PID reuse). install must refuse to overwrite and
+# remove.sh must refuse to delete them.
+mkdir -p "$VOLTIX_CONFIG_DIR"
+echo foreign > "$VOLTIX_CONFIG_DIR/native.yaml"
+mkdir -p "$UNITDIR"
+if "$ROOT/deploy/systemd/install.sh" >/dev/null 2>&1; then
+  bad "install overwrote a pre-existing untagged path"
+else
+  ok "install refused pre-existing untagged path"
+fi
+if "$ROOT/deploy/systemd/remove.sh" >/dev/null 2>&1; then
+  bad "remove.sh deleted resources it did not own"
+else
+  ok "remove.sh refused untagged resources"
+fi
+[ "$(cat "$VOLTIX_CONFIG_DIR/native.yaml")" = "foreign" ] \
+  && ok "foreign config left intact" \
+  || bad "foreign config was modified"
+rm -rf "$VOLTIX_CONFIG_DIR" "$UNITDIR" # planted by this script — ours
+
 say "install + start user service ($UNIT_NAME)"
-"$ROOT/deploy/systemd/install.sh" >/dev/null
+# A refused/failed install must stop the run immediately — proceeding
+# would exercise (and then "clean up") resources we did not create.
+if ! "$ROOT/deploy/systemd/install.sh" >/dev/null; then
+  echo "install refused or failed — aborting (pre-existing paths?)" >&2
+  exit 1
+fi
 systemctl --user start "$UNIT_NAME"
 for i in $(seq 1 20); do S=$(status) && break; sleep 1; done
 [ -n "${S:-}" ] && ok "service started, status endpoint live" || bad "status endpoint never came up"
