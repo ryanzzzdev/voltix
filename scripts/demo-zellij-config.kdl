@@ -1,0 +1,6 @@
+// Minimal zellij config for the voltix demo launcher — keeps the demo
+// deterministic on fresh machines (no first-run wizard, no release notes).
+show_startup_tips false
+show_release_notes false
+on_force_close "quit"
+default_mode "normal"

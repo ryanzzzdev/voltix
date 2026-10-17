@@ -7,7 +7,7 @@ SHELL := /bin/bash
 GOBIN := $(dir $(shell command -v "$(GO)" 2>/dev/null || echo "$(GO)"))
 GOFMT := $(GOBIN)gofmt
 
-.PHONY: all build test check sim-env sim-test integration demo demo-down native-test fault-test clean
+.PHONY: all build test check sim-env sim-test integration demo demo-down demo-watch native-test fault-test clean
 
 all: build
 
@@ -51,6 +51,12 @@ demo:
 
 demo-down:
 	docker compose -f deploy/compose.yaml down -v
+
+# Three-pane live demo (doc 09 layout) via zellij: controller logs,
+# simulator physics, and an interactive runner pane. Starts the Compose
+# stack if needed. Requires zellij on PATH (see evidence/demo/README.md).
+demo-watch:
+	./scripts/demo-watch.sh
 
 # Native systemd --user service test (VTX-017). No root; install/remove
 # are confined to ~/.config/systemd/user and ~/.local/state/voltix.

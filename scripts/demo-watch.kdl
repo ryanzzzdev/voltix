@@ -1,0 +1,21 @@
+// Zellij layout for the Voltix three-pane demo (doc 09 arrangement):
+//   top-left  — controller logs (the real daemon output)
+//   top-right — simulated site physics, refreshed each second
+//   bottom    — runner pane (@RUNNER@ substituted by demo-watch.sh)
+layout {
+    pane size="65%" split_direction="vertical" {
+        pane name="voltix (controller)" {
+            command "bash"
+            args "-lc" "docker compose -f deploy/compose.yaml logs -f voltix"
+        }
+        pane name="simulator" {
+            command "bash"
+            args "-lc" "while :; do printf '\\033[H\\033[J'; ./scripts/sim-state.sh; sleep 1; done"
+        }
+    }
+    pane name="runner" {
+        command "bash"
+        args "-lc" "@RUNNER@"
+        close_on_exit true
+    }
+}

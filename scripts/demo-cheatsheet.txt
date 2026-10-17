@@ -1,0 +1,26 @@
+Voltix demo runner — cheat sheet (top panes watch live):
+
+  # dispatch -200 kW charge for 25 s
+  curl -s -X POST http://127.0.0.1:8180/api/dispatch \
+    -H "Authorization: Bearer voltix-demo-dispatch" \
+    -d "{\"controller_id\":\"voltix-demo\",\"boot_session_id\":\"$(curl -s -H 'Authorization: Bearer voltix-demo-dispatch' http://127.0.0.1:8180/api/status | python3 -c 'import json,sys;print(json.load(sys.stdin)["boot_session_id"])')\",\"command_id\":\"$(python3 -c 'import uuid;print(uuid.uuid4())')\",\"revision\":1,\"issued_at\":\"$(date -u +%FT%TZ)\",\"valid_until\":\"$(date -u -d '+25 seconds' +%FT%TZ)\",\"target_kw\":-200}"
+
+  # inject / clear a field-link fault
+  python3 - <<'PY'
+  import socket,json
+  s=socket.create_connection(('127.0.0.1',1504),3);s.settimeout(3)
+  s.sendall(json.dumps({'cmd':'set_online','value':False}).encode()+b'\n')
+  print(s.recv(256).decode())
+  PY
+  # (value:True to clear)
+
+  # pause / resume the upstream receiver
+  curl -s -X POST http://127.0.0.1:8081/control/pause
+  curl -s -X POST http://127.0.0.1:8081/control/resume
+
+  # controller status snapshot
+  curl -s -H "Authorization: Bearer voltix-demo-dispatch" \
+    http://127.0.0.1:8180/api/status | python3 -m json.tool
+
+  # or auto-run the whole narrative:
+  ./scripts/demo-runner.sh

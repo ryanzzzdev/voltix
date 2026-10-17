@@ -62,6 +62,7 @@ make sim-test      # simulator physics + wire tests (26 tests)
 make integration   # real-process tests (sim + controller + store + receiver)
 make demo          # isolated Compose site: bounded readiness, prints endpoints
 make demo-down     # remove containers, networks AND volumes
+make demo-watch    # three-pane live view via zellij (logs / sim / runner)
 make native-test   # systemd --user service verification (11 checks, no root)
 make fault-test    # fault scenarios A/B/C3/C4/D on the Compose stack (16 checks)
 ```
@@ -81,6 +82,12 @@ See [deploy/README.md](deploy/README.md) for the Compose topology,
 native unit install/remove, and the dispatch request schema, and
 [docs/operations-runbook.md](docs/operations-runbook.md) for the full
 operating procedure, fault playbook, and limitations.
+
+![Three-pane demo: controller logs, simulator physics, scripted runner](evidence/demo/demo-watch.gif)
+
+`make demo-watch` opens the live three-pane layout (requires `zellij`);
+the recordings — replayable `script` typescript, asciinema cast, and
+this GIF — are documented in [evidence/demo/README.md](evidence/demo/README.md).
 
 ## Measured claims (dev host, 2026-10-12)
 
