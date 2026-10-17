@@ -80,3 +80,21 @@ Verification this cycle: `go test -count=1 ./...` and `-race` all green;
 integration suites passed (device 14.9 s, control 51.4 s); native-test
 16/16; `make check` clean. VTX-022 privileged-environment checks remain
 open follow-up — not conflated with these corrections.
+
+
+## Independent closure review (2026-10-16)
+
+Reviewed HEAD cbe11f1, including bd6cbb6. The previous findings F1–F3 can close:
+
+- F1: caller contexts now reach adapters; deadline-aware semaphore admission and checks before I/O fence expired queued operations. Already-issued I/O remains subject to socket timeouts, and connection establishment retains the library's fixed 5-second bound. This is not immediate cancellation of an in-flight device command.
+- F2: FAULT requests zero immediately and invalidates intent. The nonzero-output regression now passes.
+- F3: cleanup verifies ownership markers before removing resources, handles plain directories and symlinks, and the native harness aborts on install refusal and checks canonical resource contents. Source reviewed; native execution was not repeated here.
+
+Independent verification at this revision:
+
+- `GOCACHE=/tmp/voltix-review-go-cache /home/ryan/.local/go/bin/go test -count=1 ./internal/control ./internal/policy ./internal/device -run 'Test(FaultAtNonzeroOutputRequestsZero|DeviceFaultInhibits|SlowReadMarkedStale|WritePhaseBounded|ExpiredQueuedWriteIsFenced|AdmissionBoundedByContext)$'`: passed (control 0.610 s, policy 0.005 s, device 0.058 s).
+- `PATH=/home/ryan/.local/go/bin:$PATH GOCACHE=/tmp/voltix-review-go-cache make check`: passed (formatting and vet).
+- A requested broader simulator/race/integration rerun did not start: automatic approval review timed out on the loopback-enabled execution request. This is an environment limitation, not a test failure. Devin's full-suite and native 16/16 results above remain attributed evidence, not independently repeated results.
+- Docker/native fault campaigns and the resource exercise were not repeated. No production code changed.
+
+Restored VTX-011, VTX-017 and VTX-020 to Done and reconciled stale backlog text/index. M1–M4 completion is limited to the local portfolio scope in decision 004. VTX-022 remains open for true ENOSPC, packet-level faults and OOM-under-load; hosted CI remains unverified. No new blocking finding identified in this focused review.

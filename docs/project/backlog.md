@@ -1,8 +1,8 @@
 # Voltix backlog
 
-Updated: 2026-10-12
+Updated: 2026-10-16
 
-Task bodies own status; the ascending index mirrors it. Follow the [task conventions](documentation-guide.md#task-records). No application implementation has started.
+Task bodies own status; the ascending index mirrors it. Follow the [task conventions](documentation-guide.md#task-records).
 
 ## Task index
 
@@ -16,24 +16,23 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 - ✅ [VTX-008 — Implement pure supervisory operating policies](#vtx-008)
 - ✅ [VTX-009 — Implement authenticated dispatch sessions and leases](#vtx-009)
 - ✅ [VTX-010 — Integrate the control loop and diagnostic snapshots](#vtx-010)
-- 🟢 [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
+- ✅ [VTX-011 — Verify control boundaries and recovery end to end](#vtx-011)
 - ✅ [VTX-012 — Implement the bounded durable event store](#vtx-012)
 - ✅ [VTX-013 — Implement the transactional upstream mock](#vtx-013)
 - ✅ [VTX-014 — Implement bounded upload and acknowledgement handling](#vtx-014)
 - ✅ [VTX-015 — Integrate telemetry and verify resource and storage failures](#vtx-015)
 - ✅ [VTX-016 — Package the isolated container demonstration](#vtx-016)
-- 🟢 [VTX-017 — Package and verify the native Linux service](#vtx-017)
+- ✅ [VTX-017 — Package and verify the native Linux service](#vtx-017)
 - ✅ [VTX-018 — Automate isolated Linux failure scenarios](#vtx-018)
 - ✅ [VTX-019 — Document operation and record the portfolio demonstration](#vtx-019)
-- 📋 [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
-
+- ✅ [VTX-020 — Review milestone exits and reproducible checks](#vtx-020)
 - ✅ [VTX-021 — Independently audit milestone completion](#vtx-021)
-
+- 📋 [VTX-022 — Verify privileged-environment fault scenarios](#vtx-022)
 - ✅ [VTX-023 — Recheck the audit corrections](#vtx-023)
 
 ## Delivery notes
 
-Follow-up audit VTX-023 found two remaining control regressions and native cleanup edge cases. Next: VTX-011 operation-lifetime/fault-target corrections and VTX-017 ownership-aware cleanup; VTX-020 rechecks completion afterwards. VTX-022 retains privileged-environment follow-ups. See [review](evidence/review/m4-followup-audit.md). Next unused ID: VTX-024.
+Follow-up audit findings F1–F3 are closed after review of bd6cbb6 and cbe11f1. M1–M4 are complete within the local portfolio scope recorded in decision 004. VTX-022 retains privileged-environment follow-ups; hosted CI remains unverified. See [review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16). Next unused ID: VTX-024.
 
 <a id="vtx-001"></a>
 
@@ -355,7 +354,7 @@ Simplification recorded: `MeasuredAt` is the cycle read-start time, so "input ag
 - Area: integration
 - Milestone: M2
 - Priority: High
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-010](#vtx-010)
 - References: [control](features/control.md), [verification](features/verification.md)
 
@@ -371,6 +370,8 @@ Prove the M2 behaviour against real simulator and dispatch processes.
 - Record M2 exit findings with workload and timing evidence in evidence/control/findings.md; do not extrapolate to physical safety guarantees.
 
 ### Completion evidence
+
+Closed on 2026-10-16 after reviewing corrections through cbe11f1. Targeted regression tests and `make check` passed independently; full integration/native results remain Devin-reported evidence. See the [independent closure review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16) for scope and limitations. Historical reopenings below are superseded by this closure.
 
 `internal/control/e2e_test.go` (build tag `integration`, `make integration`) runs the real `bin/voltix` against the real simulator and covers every required scenario in a single 26 s pass: standby, discharge/charge ramping at ≤50 kW/s to target, expiry fallback with fallback-start vs time-to-zero measured separately, SoC floor inhibit, infeasible baseline reported as `SITE_LIMIT_INFEASIBLE`, device fault inhibit+clear, offline/stale degradation, old-session replay rejection after restart with fresh-session rev-1 acceptance, 400/401 paths, delayed-write `Acknowledged=null` uncertainty and recovery, SIGSTOP-induced gap invalidation, and no recovery jump to an old target. Findings recorded in `evidence/control/findings.md` with the M2 exit review — all five exit criteria met. `go vet` clean; unit+races green (policy 11, dispatch 10, control 9).
 
@@ -563,7 +564,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: deployment
 - Milestone: M4
 - Priority: Normal
-- Status: Ready 🟢
+- Status: Done ✅
 - Depends on: [VTX-015](#vtx-015)
 - References: [architecture](architecture.md), [verification](features/verification.md), [blockers](blockers.md#blk-003)
 
@@ -580,6 +581,8 @@ Verify the controller as an unprivileged systemd service in an explicitly select
 
 ### Completion evidence
 
+Closed on 2026-10-16 after reviewing corrections through cbe11f1. Targeted regression tests and `make check` passed independently; full integration/native results remain Devin-reported evidence. See the [independent closure review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16) for scope and limitations. Historical reopenings below are superseded by this closure.
+
 `deploy/systemd/voltix.service` is a real `systemd --user` unit (BLK-003 resolved this way — the host runs a user manager on cgroup v2; no root or host service needed): Restart=on-failure/RestartSec=2, MemoryMax=128M, NoNewPrivileges+PrivateTmp+ProtectSystem=strict, journal output, StateDirectory=voltix. install.sh/remove.sh are idempotent and confined to ~/.config/{systemd/user,voltix}, ~/.local/libexec and ~/.local/state. `make native-test` (scripts/native-test.sh) starts sim on 2512-2514 + upstream-mock on 8191 as plain processes, then verifies everything machine-checkably. Verified 2026-10-12 ~04:00 UTC — 11/11 checks: status live, uid=1000, state dir 0700 owner=user, journal lines, MemoryMax=134217728 enforced in cgroup memory.max, dispatch rev1 -> ACTIVE, SIGKILL -> new boot session in 2.68 s, old-session replay -> 409, telemetry reached+acked at mock. Quirks recorded in deploy/README: user-manager StateDirectory is a ~/.local/state->~/.config symlink (stat -L needed; ExecStartPre chmods the real dir 0700); command lifetime bound is 30 s. Actual OOM-under-load not exercised — MemoryMax cgroup enforcement verified only. This is distinct native evidence, not container restart evidence.
 
 ### Notes
@@ -590,7 +593,7 @@ Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-au
 
 Corrective cycle 2026-10-12 (commit 6715588): the harness can no longer touch a developer install. install.sh/remove.sh accept `VOLTIX_UNIT_NAME`/`VOLTIX_BIN_PATH`/`VOLTIX_CONFIG_DIR`/`VOLTIX_STATE_NAME` overrides, `VOLTIX_REFUSE_EXISTING=1` aborts on any pre-existing path, and native-test runs under PID-unique names with an EXIT-trap cleanup, canonical-path guard snapshots, and post-cleanup leak assertions. remove.sh resolves the StateDirectory symlink layout and only removes resolved paths under the per-user trees. Verified: 13/13 including `all test-created resources removed` and `canonical install paths untouched`.
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+
 
 Follow-up audit cycle 2026-10-12 (F3): remove.sh handles both
 StateDirectory layouts (symlink and plain dir; the prior `rm -f` aborted
@@ -676,7 +679,7 @@ Execute when dependencies are complete; capture actual evidence before marking D
 - Area: integration
 - Milestone: M4
 - Priority: Normal
-- Status: Backlog 📋
+- Status: Done ✅
 - Depends on: [VTX-019](#vtx-019)
 - References: [roadmap](roadmap.md), [verification](features/verification.md)
 
@@ -693,6 +696,8 @@ Close the local portfolio milestone only when its documented evidence supports c
 
 ### Completion evidence
 
+Closed on 2026-10-16 after reviewing corrections through cbe11f1. Targeted regression tests and `make check` passed independently; full integration/native results remain Devin-reported evidence. See the [independent closure review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16) for scope and limitations. Historical reopenings below are superseded by this closure.
+
 `evidence/demo/exit-review.md` reconciles all 14 verification-matrix rows with actual results; `.github/workflows/ci.yml` defines nonprivileged hosted checks (gofmt/vet/test/-race/build, sim tests, loopback integration) while demo/fault/native stay the documented local path — hosted execution explicitly unverified (no remote authorised or observed). Resource exercise (matrix H): `scripts/resource-run.sh` — 30 min at 1 Hz with ~5-min mock outage: 1805 events all uploaded, depth peaked 298 at resume then drained to <=5 in ~10 s (replay far faster than production), upload_failed=14 bounded, RSS 14.4->21.1->20.0 MB, loop reads 1-8 ms throughout, zero persistent loss. Re-ran all check commands locally 2026-10-12: gofmt clean, vet clean, go test + -race green, sim 26/26, make demo/fault-test (16/16)/native-test (11/11). Open follow-ups recorded: real ENOSPC fault injection, packet-level faults (netns denied), OOM-under-load, hosted CI. No accounts created, nothing pushed.
 
 ### Notes
@@ -703,7 +708,7 @@ Reopened by the independent 2026-10-12 [audit](evidence/review/m4-independent-au
 
 Corrective cycle 2026-10-12 (commit 8ba02d9): `make check` resolves `gofmt` beside the selected `$(GO)` toolchain and fails explicitly when the formatter is missing or errors — verified with missing and erroring shims; a real `gofmt` drift it then caught in cmd/voltix/main.go was fixed. Exit review updated: row F re-labelled, fault/native counts refreshed, unavailable checks stay open. Stale docs/evidence links: scan found none remaining; roadmap header/table already reconciled by the audit pass.
 
-Execute when dependencies are complete; capture actual evidence before marking Done.
+
 
 <a id="vtx-021"></a>
 
@@ -798,3 +803,6 @@ Existing uncached Go race and simulator suites pass; two focused control regress
 ### Notes
 
 Review complete; VTX-011, VTX-017 and VTX-020 are reopened. M3's storage-failure correction remains recorded separately from pending privileged ENOSPC verification.
+
+
+2026-10-16 follow-up: reviewed bd6cbb6/cbe11f1 and closed F1–F3; VTX-011, VTX-017 and VTX-020 restored to Done. Targeted regressions and formatting/vet passed independently. Full-suite and native results are attributed to Devin, not a fresh independent rerun. See the linked closure review.
