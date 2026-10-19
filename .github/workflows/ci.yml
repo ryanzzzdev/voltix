@@ -30,7 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: cd sim && uv sync && uv run pytest -q
+      - run: cd sim && uv sync
+      - run: cd sim && uv run pytest -q
 
   integration:
     runs-on: ubuntu-latest
