@@ -3,7 +3,7 @@
 These instructions apply to planning and implementation in this project directory.
 
 - Write readable code following the existing style and formatter. Preserve user formatting and avoid unrelated reformatting. Prefer the simpler implementation when approaches are equally suitable.
-- Use the `project-management` skill for meaningful Voltix work. If it is not in the skill catalogue, read `/home/ryan/.codex/skills/project-management/SKILL.md` when available. Otherwise follow the documentation guide directly.
+- Use the `project-management` skill for meaningful Voltix work. The skill is tracked in this repository at `.devin/skills/project-management/`, so every clone carries it. If the skill is missing from the catalogue, read `docs/project/documentation-guide.md` and recreate it under `.devin/skills/project-management/` before relying on it — do not fall back to machine-local skill copies.
 - Read `docs/project/documentation-guide.md`, relative to this file, before meaningful project work. It owns documentation locations, templates, statuses, and update conventions.
 - Before ending a turn that changes implementation, produces substantive investigation findings, records an accepted planning decision, or delivers project documentation, update the affected project records and journal as part of the authorised work.
 - Update only affected records. Pure explanations and unchanged status checks need no entry. Do not duplicate journal entries for the same outcome or create empty trackers for future features.
