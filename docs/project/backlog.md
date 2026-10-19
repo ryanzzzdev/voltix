@@ -32,7 +32,7 @@ Task bodies own status; the ascending index mirrors it. Follow the [task convent
 
 ## Delivery notes
 
-Follow-up audit findings F1–F3 are closed after review of bd6cbb6 and cbe11f1. M1–M4 are complete within the local portfolio scope recorded in decision 004. VTX-022 retains privileged-environment follow-ups; hosted CI remains unverified. See [review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16). Next unused ID: VTX-024.
+Follow-up audit findings F1–F3 are closed after review of bd6cbb6 and cbe11f1. M1–M4 are complete within the local portfolio scope recorded in decision 004. VTX-022 retains privileged-environment follow-ups. Hosted CI verified green 2026-10-19 (run 39186883811: go/sim/integration all pass). See [review](evidence/review/m4-followup-audit.md#independent-closure-review-2026-10-16). Next unused ID: VTX-024.
 
 <a id="vtx-001"></a>
 

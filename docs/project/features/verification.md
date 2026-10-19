@@ -49,7 +49,7 @@ The final report names OS/toolchain/library versions, workload and durations, ex
 
 Initial resource exercise: 30-minute 1 Hz run with a five-minute telemetry outage, declared event size and limit configuration. Treat this as bounded test evidence, not proof of no memory leaks or unlimited uptime. Measure end-to-end loop time during catch-up and under memory constraints. If MemoryMax=128M is unsuitable, record the evidence and chosen limit rather than disguising OOM failures.
 
-Hosted CI is an optional execution venue until a remote is authorised and available. VTX-020 must label it unverified if no hosted run exists; local success is not CI evidence. Power-cut/hardware, ARM deployment and real equipment remain excluded.
+Hosted CI is an optional execution venue: first green hosted run observed 2026-10-19 (go, sim and loopback integration jobs all passing). Power-cut/hardware, ARM deployment and real equipment remain excluded.
 
 Fault-injection scope on the development host is application/process-level plus a kernel-enforced file-size-limit storage fault; true packet-level injection, packet capture and filesystem ENOSPC are unavailable without privileges and are carried as follow-up work — see [decision 004](../decisions/004-local-fault-injection-scope.md).
 

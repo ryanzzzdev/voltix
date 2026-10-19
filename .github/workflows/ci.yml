@@ -4,8 +4,8 @@
 # simulator and loopback-only integration tests. The Compose demo,
 # fault harness and native systemd checks require a daemon/service
 # environment and are the documented *local* path (make demo /
-# fault-test / native-test). Hosted execution is unverified until a
-# remote is authorised and a run is observed.
+# fault-test / native-test). First green hosted run observed
+# 2026-10-19 (run 39186883811).
 name: ci
 on:
   push:
