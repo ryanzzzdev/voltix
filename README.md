@@ -1,5 +1,7 @@
 # Voltix
 
+License: [MIT](LICENSE)
+
 Voltix is a Linux edge controller and telemetry gateway for a *simulated*
 battery energy storage site. A Go daemon polls a pymodbus SunSpec
 inverter + site meter, applies a 1 Hz supervisory control loop under
