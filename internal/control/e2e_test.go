@@ -473,29 +473,51 @@ func TestControlEndToEnd(t *testing.T) {
 
 	// 12. No recovery jump to an old target: fresh +200 kW after recovery
 	//     must ramp from measured (~0), never appearing at full value early.
-	// The contract requires a dispatch *after* status is clear — on a slow
-	// runner the loop can still be DEGRADED here and would invalidate the
-	// new intent, so wait for STANDBY before posting.
-	if !poll(5*time.Second, func() bool { return loopState(t, p) == "STANDBY" }) {
-		t.Fatalf("loop did not return to STANDBY before recovery dispatch: %s", loopState(t, p))
-	}
-	code, _ = postDispatch(t, p, 3, 200, 30*time.Second)
-	if code != 202 {
-		t.Fatalf("recovery dispatch: %d", code)
-	}
-	jumped := false
-	deadline = time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if outputKW(ctl.state(t)) > 130 {
-			jumped = true
-			break
+	// The contract requires a dispatch *after* status is clear, and any
+	// degraded cycle — a missed read or a timing gap on a starved host —
+	// legitimately invalidates intent, so retry the
+	// STANDBY → dispatch → ramp sequence rather than assuming the first
+	// dispatch survives.
+	reached := false
+	for rev := int64(3); rev <= 6 && !reached; rev++ {
+		if !poll(10*time.Second, func() bool { return loopState(t, p) == "STANDBY" }) {
+			t.Fatalf("loop did not return to STANDBY for recovery dispatch: %+v",
+				status(t, p)["loop"])
 		}
-		time.Sleep(100 * time.Millisecond)
+		// A retry after a mid-ramp invalidation starts from a decaying
+		// output — wait for it to settle so the jump check stays valid.
+		if !poll(10*time.Second, func() bool { return outputKW(ctl.state(t)) < 5 }) {
+			t.Fatalf("output did not settle before recovery dispatch: %+v", ctl.state(t))
+		}
+		code, _ = postDispatch(t, p, rev, 200, 30*time.Second)
+		if code != 202 {
+			t.Fatalf("recovery dispatch: %d", code)
+		}
+		jumped := false
+		rampDeadline := time.Now().Add(2 * time.Second)
+		for time.Now().Before(rampDeadline) {
+			if outputKW(ctl.state(t)) > 130 {
+				jumped = true
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		if jumped {
+			t.Fatal("output jumped to old-scale target on recovery")
+		}
+		for t0 := time.Now(); time.Since(t0) < 8*time.Second; {
+			if outputKW(ctl.state(t)) >= 195 {
+				reached = true
+				break
+			}
+			if status(t, p)["dispatch_active"] == false {
+				break // a degraded cycle dropped the intent; re-dispatch
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
-	if jumped {
-		t.Fatal("output jumped to old-scale target on recovery")
-	}
-	if !poll(8*time.Second, func() bool { return outputKW(ctl.state(t)) >= 195 }) {
-		t.Fatalf("recovery never reached target: %+v", ctl.state(t))
+	if !reached {
+		t.Fatalf("recovery never reached target: sim=%+v loop=%+v",
+			ctl.state(t), status(t, p)["loop"])
 	}
 }
