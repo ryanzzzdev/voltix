@@ -108,6 +108,7 @@ the runbook and milestone findings.
 
 ## Project documentation
 
+- [Learning guide: domain, architecture, and demo meaning](docs/learning-guide.md)
 - [Documentation workflow](docs/project/documentation-guide.md)
 - [Roadmap and milestone progress](docs/project/roadmap.md)
 - [Backlog and next work](docs/project/backlog.md)

@@ -1,7 +1,7 @@
 # Supervisory control and dispatch contract
 
 Date: 2026-10-12
-Status: Implementation baseline; defaults require measured verification, not claimed real-time guarantees.
+Status: Implemented and verified in the simulated/local test scope; no hard real-time or production-safety guarantee.
 
 ## Single-controller scope
 

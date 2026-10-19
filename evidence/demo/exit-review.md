@@ -63,8 +63,8 @@ Measured 2026-10-12, duration 1806 s, voltix on native harness ports:
 CI configuration: `.github/workflows/ci.yml` covers gofmt/vet/test/-race/
 build + sim tests + loopback integration — nonprivileged checks only.
 Demo/fault/native remain the documented local path (require a Docker
-daemon / user systemd). **Hosted CI is unverified** — no remote is
-authorised or configured; no run has been observed.
+daemon / user systemd). Hosted CI was first verified green on 2026-10-19:
+run 39186883811 passed the go, sim and loopback integration jobs.
 
 ## Limitations and follow-ups
 
@@ -81,7 +81,6 @@ authorised or configured; no run has been observed.
   not exercised.
 - **Hardware power loss** and physical storage guarantees unproven
   (SIGKILL ≈ crash only).
-- **Hosted CI / publication**: unverified, no remote; ARM and real
-  hardware remain out of scope.
+- **Publication**: not performed; ARM and real hardware remain out of scope.
 - 30 s command-lifetime bound and loopback-only demo are design
   constraints, not failures.

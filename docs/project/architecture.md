@@ -1,7 +1,7 @@
 # Voltix architecture
 
-Updated: 2026-10-12
-Status: Selected implementation baseline under the user's planning request; not implemented or runtime-verified.
+Updated: 2026-10-19
+Status: Implemented and verified for the local simulated portfolio scope; privileged-environment follow-up remains VTX-022.
 
 ## Purpose and boundaries
 
@@ -39,23 +39,25 @@ WAN failures are separated from field-device failures. Dispatch and telemetry us
 
 Do not use the proposal's old minimum Go version as a current pin. Runtime/library versions are chosen from supported releases at bootstrap with compatibility evidence. No Redis, broker, custom WAL, framework, or orchestration platform is needed.
 
-## Intended repository layout
+## Repository layout
 
-Create files when their task needs them; this is not a requirement to generate empty packages.
+The implemented repository uses these boundaries (some package names were
+simplified from the original planning sketch):
 
 ```text
 cmd/voltix/main.go              Entry point, wiring, shutdown
-internal/config/               Validated configuration
 internal/dispatch/             HTTP validation, session/lease handling
-internal/driver/               Narrow device interfaces and Modbus/SunSpec adapter
-internal/engine/               Pure control policy and loop orchestration
-internal/queue/                SQLite event persistence and retention
+internal/device/               Narrow Modbus/SunSpec adapter
+internal/policy/               Pure control policy
+internal/control/              Loop orchestration and diagnostic snapshots
+internal/store/                SQLite event persistence and retention
+internal/telemetry/            Snapshot-to-event mapping
 internal/syncer/               Bounded HTTP uploader and retry
-sim/inverter/                  Python site simulator and tests
-sim/cloud/                     Go dispatcher/receiver entry point (root Go module)
+internal/upstream/             Mock dispatcher and receiver
+sim/voltix_sim/                Python site simulator
 configs/                       Example configuration without secrets
 contracts/                     Checked device register manifest and golden fixtures
-tests/integration/            Cross-process acceptance tests
+internal/*/*_test.go           Unit and cross-process integration tests
 deploy/                        Compose definition and systemd unit
 scripts/                       Test environment and demo orchestration
 docs/project/                 Canonical specifications and evidence
@@ -91,12 +93,26 @@ Local HTTP management exposes process liveness and a redacted status snapshot in
 
 ## Deployment and lifecycle
 
-The convenient demo runs containers; native verification runs the Go binary under systemd and keeps simulated devices/backend in test processes or containers. Use an unprivileged controller user and a dedicated writable state directory. Port 1502 is the simulator default so low-port privileges are unnecessary. Only the isolated fault harness requires network-administration capabilities.
+The convenient demo runs containers; native verification runs the Go binary under systemd and keeps simulated devices/backend in test processes or containers. Use an unprivileged controller user and a dedicated writable state directory. Port 1502 is the simulator default so low-port privileges are unnecessary. The delivered fault harness uses application/process-level controls without network-administration capabilities; packet-level variants remain VTX-022 follow-up scope.
 
 Graceful shutdown stops accepting commands, attempts a bounded fallback request, and closes workers/storage within a budget. No shutdown hook is relied upon for correctness after kill -9: the independent simulated inverter watchdog remains responsible for that case.
 
-A separate runbook will document service install/removal, startup, logs, state/reset policy and cleanup once tested. No automatic installation into the user's host or changes to global network rules are part of planning.
+The [operations runbook](../operations-runbook.md) documents tested service
+install/removal, startup, logs, state/reset policy, failure scenarios and
+cleanup. No automatic installation into the user's host or changes to global
+network rules are part of normal operation.
 
 ## Current state and remaining gates
 
-Only documentation exists. The Git repository was initialised on 2026-10-12 with the planning baseline committed at user request; no module creation, dependencies, tests, or service installation has occurred. [Open questions](blockers.md) identify protocol, driver, and native-environment verification gates without describing them as failed attempts.
+M1–M4 are complete under the fault-injection boundary accepted in
+[decision 004](decisions/004-local-fault-injection-scope.md). The Go controller,
+Python simulator, SQLite event pipeline, upstream mock, Compose demo, native
+systemd user-service harness, and failure scripts are implemented. Local
+evidence and the first green hosted CI run are linked from the
+[roadmap](roadmap.md) and [acceptance review](../../evidence/demo/exit-review.md).
+
+[VTX-022](backlog.md#vtx-022) remains open for true filesystem ENOSPC,
+packet-level/network-namespace faults, packet capture, and OOM-under-load in a
+privileged disposable environment. Real battery hardware, production grid
+compliance, public deployment and physical power-loss guarantees remain out of
+scope.

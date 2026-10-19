@@ -1,20 +1,25 @@
 # Verification and demonstration plan
 
 Date: 2026-10-12
-Status: Required checks for implementation; none have run against application code yet.
+Status: Implemented verification plan; M1–M4 checks complete within decision 004's local fault-injection scope, with VTX-022 privileged checks open.
 
-## Layers and intended commands
+## Layers and commands
 
-| Layer | Planned command | Environment and claim |
+| Layer | Command | Environment and claim |
 | --- | --- | --- |
-| Unit | make test | Go and simulator unit tests; pure policy, decoding, queue logic |
-| Static/race | make check | Formatting, Go vet/race checks, selected Python checks after bootstrap |
+| Unit | make test | Go unit tests; pure policy, decoding, queue logic |
+| Static/race | make check / go test -race ./... | Formatting, Go vet and race checks |
+| Simulator | make sim-test | Python physics and wire-profile tests |
 | Integration | make integration | Real processes and SQLite; no host-wide network mutation |
-| Network faults | make fault-test | Disposable Linux namespaces/containers with explicitly scoped NET_ADMIN privileges |
-| Native service | make native-test | Disposable Linux VM with systemd, or explicitly selected test host; not the container demo |
-| Demonstration | make demo | Start the site and print/stream useful state; optional recording tooling |
+| Fault scenarios | make fault-test | Disposable Compose stack; application/process-level faults, no NET_ADMIN |
+| Native service | make native-test | Local systemd user manager; not the container demo |
+| Demonstration | make demo / make demo-watch | Start the site; optional three-pane live narrative |
 
-These commands are targets to implement, not instructions claimed to work today. Separate setup prerequisites, cleanup and failure diagnostics. Fault tests fail clearly or report unavailable capability; they must not silently pass by skipping required checks. A full failure recording may call fault-test separately; tmux is optional.
+These commands are implemented and their recorded results are reconciled in
+the [acceptance review](../../../evidence/demo/exit-review.md). Setup
+prerequisites, cleanup and failure diagnostics remain separate. The delivered
+fault tests state unavailable privileged capabilities explicitly rather than
+silently treating them as passed.
 
 ## Acceptance matrix
 

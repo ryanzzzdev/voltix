@@ -1,7 +1,7 @@
 # Device profile and simulation contract
 
 Date: 2026-10-12
-Status: Selected simulator scope; register-level manifest and interoperability remain VTX-004 verification gates.
+Status: Implemented and verified for the frozen simulator profile; not a claim of universal SunSpec interoperability.
 
 ## Scope and model selection
 

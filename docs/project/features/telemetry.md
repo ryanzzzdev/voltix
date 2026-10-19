@@ -1,7 +1,7 @@
 # Telemetry persistence and delivery contract
 
 Date: 2026-10-12
-Status: Selected implementation contract; durability and resource measurements not yet verified.
+Status: Implemented and verified for process-crash, bounded-retention, retry, and measured local resource scenarios; physical power-loss durability remains unproven.
 
 ## Event identity and durable boundary
 
