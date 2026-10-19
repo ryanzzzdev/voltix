@@ -473,6 +473,12 @@ func TestControlEndToEnd(t *testing.T) {
 
 	// 12. No recovery jump to an old target: fresh +200 kW after recovery
 	//     must ramp from measured (~0), never appearing at full value early.
+	// The contract requires a dispatch *after* status is clear — on a slow
+	// runner the loop can still be DEGRADED here and would invalidate the
+	// new intent, so wait for STANDBY before posting.
+	if !poll(5*time.Second, func() bool { return loopState(t, p) == "STANDBY" }) {
+		t.Fatalf("loop did not return to STANDBY before recovery dispatch: %s", loopState(t, p))
+	}
 	code, _ = postDispatch(t, p, 3, 200, 30*time.Second)
 	if code != 202 {
 		t.Fatalf("recovery dispatch: %d", code)
