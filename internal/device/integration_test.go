@@ -7,6 +7,7 @@ package device
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,7 @@ import (
 	"net"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -62,14 +64,19 @@ func startSim(t *testing.T) (invAddr, metAddr string, ctl *simCtl) {
 		"--meter-port", fmt.Sprint(met),
 		"--control-port", fmt.Sprint(cp))
 	cmd.Dir = filepath.Join("..", "..", "sim")
+	var serr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &serr, &serr
+	// uv spawns the python child; kill the whole group or the child is
+	// orphaned holding the output pipes and Wait() below blocks forever.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start simulator: %v", err)
 	}
-	t.Cleanup(func() { cmd.Process.Kill(); cmd.Wait() })
+	t.Cleanup(func() { syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); cmd.Wait() })
 
 	var conn net.Conn
 	var err error
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 300; i++ {
 		conn, err = net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", cp), 100*time.Millisecond)
 		if err == nil {
 			break
@@ -77,7 +84,7 @@ func startSim(t *testing.T) (invAddr, metAddr string, ctl *simCtl) {
 		time.Sleep(100 * time.Millisecond)
 	}
 	if err != nil {
-		t.Fatalf("control port never came up: %v", err)
+		t.Fatalf("control port never came up: %v\nsim output:\n%s", err, serr.String())
 	}
 	ctl = &simCtl{conn: conn, rd: bufio.NewReader(conn)}
 	t.Cleanup(func() { conn.Close() })
